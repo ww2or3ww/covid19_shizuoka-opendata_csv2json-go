@@ -1,0 +1,1 @@
+# covid19_shizuoka-opendata_csv2json-go
