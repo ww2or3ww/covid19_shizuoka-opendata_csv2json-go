@@ -8,7 +8,8 @@ import (
 )
 
 func TestHandlerSuccess(t *testing.T) {
-	logger.LogInitialize(logger.Error, 25)
+	logger.LogInitialize(logger.Debug, 25)
+
 	type args struct {
 		key   string
 		value string

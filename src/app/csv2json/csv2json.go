@@ -1,15 +1,15 @@
 package csv2json
 
 import (
+	"app/utils/apiutil"
 	"app/utils/logger"
+	"app/utils/maputil"
 	"encoding/json"
 	"fmt"
 	"github.com/Songmu/go-httpdate"
 	"github.com/go-gota/gota/dataframe"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
-	"io/ioutil"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,8 +26,8 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 		values := strings.Split(value, ":")
 		key := values[0]
 		apiId := values[1]
-		logger.Infos("%d, key=%s, id=%s", index, key, apiId)
-		dfCsv, dtUpdated, err := getCSVData(fmt.Sprintf("%s?id=%s", apiAddress, apiId))
+		logger.Infof("%d, key=%s, id=%s", index, key, apiId)
+		dfCsv, dtUpdated, err := getCSVDataFrameFromApi(fmt.Sprintf("%s?id=%s", apiAddress, apiId))
 		if err != nil {
 			logger.Errors(err)
 			hasError = true
@@ -48,7 +48,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 		logger.Infos(mapTmp)
 		if mapTmp != nil {
 			mapWithKey := map[string]interface{}{key: *mapTmp}
-			mapResult = mergeMaps(mapResult, mapWithKey)
+			mapResult = maputil.MergeMaps(mapResult, mapWithKey)
 			if dtUpdated.After(dtLastUpdate) {
 				dtLastUpdate = dtUpdated
 			}
@@ -74,94 +74,37 @@ func mapNotSupported(key string) *map[string]interface{} {
 	return &mapResult
 }
 
-func mergeMaps(m ...map[string]interface{}) map[string]interface{} {
-	ans := make(map[string]interface{}, 0)
-	for _, c := range m {
-		for k, v := range c {
-			ans[k] = v
-		}
-	}
-	return ans
-}
+func getCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error) {
 
-func getCSVData(apiAddress string) (*dataframe.DataFrame, time.Time, error) {
-	mapBody, err := getJsonMapFromResponseBody(apiAddress)
+	// get json from api
+	mapBody, err := apiutil.GetJsonMapFromResponseBody(apiAddress)
 	if err != nil {
 		logger.Errors(err)
 		return nil, time.Time{}, err
 	}
 
+	// get csv address from json
 	csvAddress, updatedDateTime, err := getCsvAddressFromBody(mapBody)
 	if err != nil {
 		logger.Errors(err)
 		return nil, time.Time{}, err
 	}
-	logger.Infos(csvAddress)
-	logger.Infos(updatedDateTime)
+	logger.Infof("csv address = %v", csvAddress)
+	logger.Infof("update time = %v", updatedDateTime)
 
-	bytesCsv, err := getBytesFromResponseBody(csvAddress)
+	// get bytes data from csv
+	bytesCsv, err := apiutil.GetBytesFromResponseBody(csvAddress)
 	if err != nil {
 		logger.Errors(err)
 		return nil, time.Time{}, err
 	}
+
+	// convert to dataframe from csv bytes data
 	ioReaderCsv := strings.NewReader(string(bytesCsv))
 	strCsv := transform.NewReader(ioReaderCsv, japanese.ShiftJIS.NewDecoder())
 	dfCsv := dataframe.ReadCSV(strCsv, dataframe.WithDelimiter(','), dataframe.HasHeader(true))
 
 	return &dfCsv, updatedDateTime, nil
-}
-
-func getJsonMapFromResponseBody(apiAddress string) (*map[string]interface{}, error) {
-
-	bytesBody, err := getBytesFromResponseBody(apiAddress)
-	if err != nil {
-		logger.Errors(err)
-		return nil, err
-	}
-
-	// convert to map from body string
-	var mapJsonData map[string]interface{}
-	err = json.Unmarshal([]byte(bytesBody), &mapJsonData)
-	if err != nil {
-		logger.Errors(err)
-		return nil, err
-	}
-
-	return &mapJsonData, nil
-}
-
-func getBytesFromResponseBody(address string) ([]byte, error) {
-	// creeate get request
-	request, err := http.NewRequest("GET", address, nil)
-	if err != nil {
-		logger.Errors(err)
-		return nil, err
-	}
-
-	// do get response
-	client := new(http.Client)
-	response, err := client.Do(request)
-	if err != nil {
-		logger.Errors(err)
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	// check status code
-	logger.Debugs(response.Status)
-	if response.StatusCode != http.StatusOK {
-		errMsg := fmt.Sprintf("response.Status : %v", response.Status)
-		logger.Errorf(errMsg)
-		return nil, fmt.Errorf("%s", errMsg)
-	}
-
-	// read body bytes
-	bytesBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		logger.Errors(err)
-	}
-
-	return bytesBody, err
 }
 
 // mapBody["result"]["resources"][n]["download_url"](*.csv)
@@ -186,7 +129,7 @@ func getCsvAddressFromBody(mapBody *map[string]interface{}) (csvAddress string, 
 	}
 	if csvAddress == "" {
 		errMsg := "not found .csv resource from body"
-		logger.Errorf(errMsg)
+		logger.Errors(errMsg)
 		return "", updatedDateTime, fmt.Errorf("%s", errMsg)
 	}
 
