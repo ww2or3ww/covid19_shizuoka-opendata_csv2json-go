@@ -17,9 +17,18 @@ go version go1.13.4 linux/amd64
 |  |  |--go.mod
 |  |  |--go.sum
 |  |  |--main.go
+|  |  |--csv2json
+|  |  |  |--csv2json.go
+|  |  |  |--mainSummary.go
+|  |  |  |--patients.go
+|  |  |  |--patientsSummary.go
 |  |  |--utils
-|  |  |  |--logging.go
-```
+|  |  |  |--apiutil
+|  |  |  |  |--apiutil.go
+|  |  |  |--logger
+|  |  |  |  |--logger.go
+|  |  |  |--maputil
+|  |  |  |  |--maputil.go```
 
 ## 初期セットアップ
 
@@ -28,7 +37,7 @@ $ cd src/app
 $ go mod init app
 ```
 
-## デバッグ実行
+## 実行
 
 ```
 $ go run main.go
