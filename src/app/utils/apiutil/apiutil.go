@@ -9,8 +9,6 @@ import (
 )
 
 func GetBytesFromResponseBody(address string) ([]byte, error) {
-	address = "ss"
-
 	// creeate get request
 	request, err := http.NewRequest("GET", address, nil)
 	if err != nil {

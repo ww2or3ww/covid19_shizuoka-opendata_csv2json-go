@@ -1,5 +1,47 @@
 package csv2json
 
+/*
+csv
+No,全国地方公共団体コード,都道府県名,市区町村名,公表_年月日,曜日,発症_年月日,患者_居住地,患者_年代,患者_性別,患者_職業,患者_状態,患者_症状,患者_渡航歴の有無フラグ,退院済フラグ,備考
+1,221309,静岡県,浜松市,2020-03-28,土,,浜北区,,男性,自営業,軽症,,0,1,
+2,221309,静岡県,浜松市,2020-04-01,水,2020-03-24,中区,30歳代,男性,会社員,軽症,,0,1,
+
+json
+  "main_summary": {
+    "date": "2021/06/12 15:01",
+    "children": [
+      {
+        "attr": "陽性患者数",
+        "value": 2180,
+        "children": [
+          {
+            "attr": "入院中",
+            "value": 215,
+            "children": [
+              {
+                "attr": "軽症・中等症",
+                "value": 214
+              },
+              {
+                "attr": "重症",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "attr": "退院",
+            "value": 1916
+          },
+          {
+            "attr": "死亡",
+            "value": 49
+          }
+        ]
+      }
+    ]
+  },
+*/
+
 import (
 	"app/utils/logger"
 	"encoding/json"
@@ -54,7 +96,7 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 
 	jsonStr := fmt.Sprintf(`
 	  {
-	    "date": "2021/06/07 18:56",
+	    "date": "%s",
 	    "children": [
 	      {
 	        "attr": "陽性患者数",
@@ -86,7 +128,8 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 	      }
 	    ]
 	  }
-	`, sumPosi, sumHosp, sumMild, sumServ, sumDischa)
+	`, dtUpdated.Format("2006/01/02 15:04"),
+		sumPosi, sumHosp, sumMild, sumServ, sumDischa)
 
 	var mapResult = make(map[string]interface{})
 	err := json.Unmarshal([]byte(jsonStr), &mapResult)
