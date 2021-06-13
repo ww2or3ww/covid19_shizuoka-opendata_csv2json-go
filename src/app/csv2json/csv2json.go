@@ -32,6 +32,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 			logger.Errors(err)
 			hasError = true
 		}
+
 		var mapTmp *map[string]interface{}
 		switch key {
 		case "main_summary":
@@ -42,10 +43,12 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 				mainSummaryTry2Merge4xx(dfCsv, &mapMainSummary)
 				continue
 			}
+		case "patients":
+			mapTmp = patients(dfCsv, dtUpdated)
 		default:
 			mapTmp = mapNotSupported(key)
 		}
-		logger.Infos(mapTmp)
+
 		if mapTmp != nil {
 			mapWithKey := map[string]interface{}{key: *mapTmp}
 			mapResult = maputil.MergeMaps(mapResult, mapWithKey)
