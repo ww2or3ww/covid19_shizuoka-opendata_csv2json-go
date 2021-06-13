@@ -34,6 +34,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 	hasError := false
 	types := strings.Split(queryStrPrm, ",")
 	for index, value := range types {
+		timeStart := time.Now()
 		values := strings.Split(value, ":")
 		key := values[0]
 		apiId := values[1]
@@ -52,7 +53,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 			} else {
 				mapMainSummary := mapResult[key].(map[string]interface{})
 				mainSummaryTry2Merge4xx(csvData.DfCsv, &mapMainSummary)
-				continue
+				mapTmp = nil
 			}
 		case "patients":
 			mapTmp = patients(csvData.DfCsv, csvData.DtUpdated)
@@ -69,6 +70,8 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 				dtLastUpdate = csvData.DtUpdated
 			}
 		}
+
+		logger.Infof("%s time = %d milliseconds", value, time.Since(timeStart).Milliseconds())
 	}
 	mapResult["hasError"] = hasError
 	mapResult["lastUpdate"] = dtLastUpdate
