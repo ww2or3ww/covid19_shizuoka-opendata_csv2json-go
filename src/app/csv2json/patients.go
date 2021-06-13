@@ -80,8 +80,8 @@ type (
 func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
 	dfSelected := df.Select([]string{keyDay, keyCity, keyResidence, keyAge, keySex, keyDischarge})
 
-	logger.Infos(len(dfSelected.Maps()))
-	var maps = make([]map[string]interface{}, len(dfSelected.Maps()), len(dfSelected.Maps()))
+	// 行ごとにデータを作成して配列にセット
+	var dataList = make([]Patient, len(dfSelected.Maps()), len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		residence := v[keyResidence]
 		if residence == "" {
@@ -97,43 +97,37 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 		}
 		var discharge null.String
 		if v[keyDischarge] == 1 {
-			discharge = null.NewString(`"○"`, true)
+			discharge = null.NewString(`○`, true)
 		}
 
 		var patientData Patient
-		patientData.Release = fmt.Sprintf(`%s`, v[keyDay])
+		patientData.Release = fmt.Sprintf(`%s`, v[keyDay].(string)+"T08:00:00.000Z")
 		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyCity], residence)
 		patientData.Age = fmt.Sprintf(`%s`, age)
 		patientData.Sex = fmt.Sprintf(`%s`, sex)
 		patientData.Discharge = discharge
 		patientData.Date = fmt.Sprintf(`%s`, v[keyDay])
-
-		btData, err := json.Marshal(patientData)
-		jsonStr := string(btData)
-
-		var mapTmp map[string]interface{}
-		err = json.Unmarshal([]byte(jsonStr), &mapTmp)
-		if err != nil {
-			logger.Errors(err)
-		}
-
-		maps[i] = mapTmp
+		dataList[i] = patientData
 	}
-	mapsData := make(map[string]interface{}, 0)
-	mapsData["data"] = maps
 
+	// data
+	mapsData := make(map[string]interface{}, 0)
+	mapsData["data"] = dataList
+
+	// date
 	jsonStr := fmt.Sprintf(`
 	  {
       "date": "%s"
 	  }
 	`, dtUpdated.Format("2006/01/02 15:04"))
-	var mapResult = make(map[string]interface{})
-	err := json.Unmarshal([]byte(jsonStr), &mapResult)
+	var mapDate = make(map[string]interface{})
+	err := json.Unmarshal([]byte(jsonStr), &mapDate)
 	if err != nil {
 		logger.Errors(err)
 	}
 
-	mapResult = maputil.MergeMaps(mapsData, mapResult)
+	// data と date を マージ
+	mapResult := maputil.MergeMaps(mapsData, mapDate)
 
 	return &mapResult
 }

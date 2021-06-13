@@ -15,6 +15,17 @@ import (
 	"time"
 )
 
+type (
+	CsvData struct {
+		DfCsv     *dataframe.DataFrame
+		DtUpdated time.Time
+	}
+)
+
+// 同じCSVデータを何度も読みにいかないためにバックアップしておくための変数
+// key	: csv address
+var mapCSVDataBackup = make(map[string](*CsvData))
+
 func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 	var mapResult map[string]interface{}
 	logger.Infos(apiAddress, queryStrPrm)
@@ -27,7 +38,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 		key := values[0]
 		apiId := values[1]
 		logger.Infof("%d, key=%s, id=%s", index, key, apiId)
-		dfCsv, dtUpdated, err := getCSVDataFrameFromApi(fmt.Sprintf("%s?id=%s", apiAddress, apiId))
+		csvData, err := getCSVDataFrame(fmt.Sprintf("%s?id=%s", apiAddress, apiId))
 		if err != nil {
 			logger.Errors(err)
 			hasError = true
@@ -37,14 +48,14 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 		switch key {
 		case "main_summary":
 			if mapResult[key] == nil {
-				mapTmp = mainSummary(dfCsv, dtUpdated)
+				mapTmp = mainSummary(csvData.DfCsv, csvData.DtUpdated)
 			} else {
 				mapMainSummary := mapResult[key].(map[string]interface{})
-				mainSummaryTry2Merge4xx(dfCsv, &mapMainSummary)
+				mainSummaryTry2Merge4xx(csvData.DfCsv, &mapMainSummary)
 				continue
 			}
 		case "patients":
-			mapTmp = patients(dfCsv, dtUpdated)
+			mapTmp = patients(csvData.DfCsv, csvData.DtUpdated)
 		default:
 			mapTmp = mapNotSupported(key)
 		}
@@ -52,8 +63,8 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 		if mapTmp != nil {
 			mapWithKey := map[string]interface{}{key: *mapTmp}
 			mapResult = maputil.MergeMaps(mapResult, mapWithKey)
-			if dtUpdated.After(dtLastUpdate) {
-				dtLastUpdate = dtUpdated
+			if csvData.DtUpdated.After(dtLastUpdate) {
+				dtLastUpdate = csvData.DtUpdated
 			}
 		}
 	}
@@ -75,6 +86,17 @@ func mapNotSupported(key string) *map[string]interface{} {
 		logger.Errors(err)
 	}
 	return &mapResult
+}
+
+func getCSVDataFrame(apiAddress string) (*CsvData, error) {
+	data := mapCSVDataBackup[apiAddress]
+	var err error
+	if data == nil {
+		data = &CsvData{}
+		data.DfCsv, data.DtUpdated, err = getCSVDataFrameFromApi(apiAddress)
+		mapCSVDataBackup[apiAddress] = data
+	}
+	return data, err
 }
 
 func getCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error) {

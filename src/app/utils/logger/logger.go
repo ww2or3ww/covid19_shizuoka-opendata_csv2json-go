@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -39,6 +40,10 @@ func LogInitialize(logLvIn LogLv, fileMethodLengthIn int) {
 	log.SetOutput(writer)
 
 	Infof("=== Log Initialzed | Lv=%s | Fmt=%s ===", logLvStrings[logLv], logFormatString)
+}
+
+func TypeName(value interface{}) {
+	fmt.Println(reflect.TypeOf(value))
 }
 
 func Debugf(format string, args ...interface{}) {
