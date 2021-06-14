@@ -59,6 +59,9 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 			mapTmp = patients(csvData.DfCsv, csvData.DtUpdated)
 		case "patients_summary":
 			mapTmp = patientsSummary(csvData.DfCsv, csvData.DtUpdated)
+		case "inspection_persons":
+			mapTmp = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
+
 		default:
 			mapTmp = mapNotSupported(key)
 		}
