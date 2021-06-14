@@ -86,12 +86,6 @@ func makeStringFromInterfaces(dataList ...interface{}) string {
 			slc = append(slc, data)
 		case fmt.Stringer:
 			slc = append(slc, data.String())
-		case []uint8:
-			str := ""
-			for _, val := range data {
-				str += string(val)
-			}
-			slc = append(slc, str)
 		default:
 			slc = append(slc, fmt.Sprintf("%v", data))
 		}
