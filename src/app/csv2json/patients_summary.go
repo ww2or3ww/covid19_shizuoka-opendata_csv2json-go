@@ -41,7 +41,7 @@ import (
 	"time"
 )
 
-const keyDateOfPublicate = "公表_年月日"
+const keyPatientsSummaryDateOfPublicate = "公表_年月日"
 
 type (
 	PatientSummary struct {
@@ -51,12 +51,12 @@ type (
 )
 
 func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
-	dfSelected := df.Select(keyDateOfPublicate)
+	dfSelected := df.Select(keyPatientsSummaryDateOfPublicate)
 
 	// 日付ごとにカウントアップ
 	maps := make(map[string]int)
 	for _, v := range dfSelected.Maps() {
-		dateOfPublicate := v[keyDateOfPublicate]
+		dateOfPublicate := v[keyPatientsSummaryDateOfPublicate]
 		num := maps[dateOfPublicate.(string)]
 		num++
 		maps[dateOfPublicate.(string)] = num

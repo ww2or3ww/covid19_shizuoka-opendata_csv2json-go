@@ -59,12 +59,12 @@ import (
 	"time"
 )
 
-const keyDay = "公表_年月日"
-const keyCity = "市区町村名"
-const keyResidence = "患者_居住地"
-const keyAge = "患者_年代"
-const keySex = "患者_性別"
-const keyDischarge = "退院済フラグ"
+const keyPatientsDay = "公表_年月日"
+const keyPatientsCity = "市区町村名"
+const keyPatientsResidence = "患者_居住地"
+const keyPatientsAge = "患者_年代"
+const keyPatientsSex = "患者_性別"
+const keyPatientsDischarge = "退院済フラグ"
 
 type (
 	Patient struct {
@@ -78,35 +78,35 @@ type (
 )
 
 func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
-	dfSelected := df.Select([]string{keyDay, keyCity, keyResidence, keyAge, keySex, keyDischarge})
+	dfSelected := df.Select([]string{keyPatientsDay, keyPatientsCity, keyPatientsResidence, keyPatientsAge, keyPatientsSex, keyPatientsDischarge})
 
 	// 行ごとにデータを作成して配列にセット
 	var dataList = make([]Patient, len(dfSelected.Maps()), len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
-		residence := v[keyResidence]
+		residence := v[keyPatientsResidence]
 		if residence == "" {
 			residence = "--"
 		}
-		age := v[keyAge]
+		age := v[keyPatientsAge]
 		if age == "" {
 			age = "不明"
 		}
-		sex := v[keySex]
+		sex := v[keyPatientsSex]
 		if sex == "" {
 			sex = "不明"
 		}
 		var discharge null.String
-		if v[keyDischarge] == 1 {
+		if v[keyPatientsDischarge] == 1 {
 			discharge = null.NewString(`○`, true)
 		}
 
 		var patientData Patient
-		patientData.Release = fmt.Sprintf(`%s`, v[keyDay].(string)+"T08:00:00.000Z")
-		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyCity], residence)
+		patientData.Release = fmt.Sprintf(`%s`, v[keyPatientsDay].(string)+"T08:00:00.000Z")
+		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyPatientsCity], residence)
 		patientData.Age = fmt.Sprintf(`%s`, age)
 		patientData.Sex = fmt.Sprintf(`%s`, sex)
 		patientData.Discharge = discharge
-		patientData.Date = fmt.Sprintf(`%s`, v[keyDay])
+		patientData.Date = fmt.Sprintf(`%s`, v[keyPatientsDay])
 		dataList[i] = patientData
 	}
 

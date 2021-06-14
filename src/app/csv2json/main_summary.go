@@ -50,9 +50,9 @@ import (
 	"time"
 )
 
-const keyPatientStatus = "患者_状態"
-const keyDischaFlg = "退院済フラグ"
-const keyNumberOfDeath = "死亡者人数"
+const keyMainSummaryPatientStatus = "患者_状態"
+const keyMainSummaryDischaFlg = "退院済フラグ"
+const keyMainSummaryNumberOfDeath = "死亡者人数"
 
 func isMildStatus(patientStatus string) bool {
 	return (patientStatus == "軽症" || patientStatus == "中等症" || patientStatus == "無症状")
@@ -70,10 +70,10 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 	var sumServ = 0   // 重症
 	var sumDischa = 0 // 退院
 
-	dfSelected := df.Select([]string{keyPatientStatus, keyDischaFlg})
+	dfSelected := df.Select([]string{keyMainSummaryPatientStatus, keyMainSummaryDischaFlg})
 	for _, v := range dfSelected.Maps() {
-		patientStatus := v[keyPatientStatus]
-		dischanFlg := v[keyDischaFlg]
+		patientStatus := v[keyMainSummaryPatientStatus]
+		dischanFlg := v[keyMainSummaryDischaFlg]
 
 		// 陽性患者数
 		sumPosi += 1
@@ -146,9 +146,9 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 // また、退院数から死亡者数を減算する。
 func mainSummaryTry2Merge4Deth(df *dataframe.DataFrame, mapMainSummary *map[string]interface{}) {
 	var numberOfDeth = 0 // 死亡者数
-	dfSelected := df.Select(keyNumberOfDeath)
+	dfSelected := df.Select(keyMainSummaryNumberOfDeath)
 	for _, v := range dfSelected.Maps() {
-		numberOfDeth = numberOfDeth + v[keyNumberOfDeath].(int)
+		numberOfDeth = numberOfDeth + v[keyMainSummaryNumberOfDeath].(int)
 	}
 
 	aryChildren1 := (*mapMainSummary)["children"].([]interface{})

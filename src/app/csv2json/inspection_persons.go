@@ -44,18 +44,18 @@ import (
 	"time"
 )
 
-const keyInspectDate = "実施_年月日"
-const keyInspectNumOfPeople = "検査実施_人数"
+const keyInspectPersonsDate = "実施_年月日"
+const keyInspectPersonsNumOfPeople = "検査実施_人数"
 
 func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
-	dfSelected := df.Select([]string{keyInspectDate, keyInspectNumOfPeople})
+	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
 
 	// 行ごとのデータを取得して配列へセット
 	dateList := make([]string, len(dfSelected.Maps()), len(dfSelected.Maps()))
 	numList := make([]int, len(dfSelected.Maps()), len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
-		dateList[i] = fmt.Sprintf("%s%s", v[keyInspectDate], "T08:00:00.000Z")
-		numList[i] = v[keyInspectNumOfPeople].(int)
+		dateList[i] = fmt.Sprintf("%s%s", v[keyInspectPersonsDate], "T08:00:00.000Z")
+		numList[i] = v[keyInspectPersonsNumOfPeople].(int)
 	}
 
 	// labels
