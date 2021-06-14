@@ -6,7 +6,7 @@
 ## サポートデータ
 
 | 名称 | COVID-19サイトのデータタイプKEY | オープンデータカタログID(浜松市用) |
-| --- | --- | --- | --- |
+| --- | --- | --- |
 | 検査陽性者の状況 | main_summary | 5ab47071-3651-457c-ae2b-bfb8fdbe1af1 & 92f9ebcd-a3f1-4d5d-899b-d69214294a45 |
 | 陽性患者の属性 | patients | 5ab47071-3651-457c-ae2b-bfb8fdbe1af1 |
 | 陽性患者数 | patients_summary | 5ab47071-3651-457c-ae2b-bfb8fdbe1af1 |
