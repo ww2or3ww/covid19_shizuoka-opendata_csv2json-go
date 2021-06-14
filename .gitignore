@@ -3,3 +3,4 @@ bin/
 *.zip
 *.sum
 *.mod
+.DS_Store

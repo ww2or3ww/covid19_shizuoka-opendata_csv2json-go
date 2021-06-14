@@ -67,6 +67,7 @@ go version go1.13.4 linux/amd64
 ```
 $ cd src/app
 $ go mod init app
+$ go mod tidy
 ```
 
 ## 実行
