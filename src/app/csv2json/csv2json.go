@@ -52,7 +52,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 				mapTmp = mainSummary(csvData.DfCsv, csvData.DtUpdated)
 			} else {
 				mapMainSummary := mapResult[key].(map[string]interface{})
-				mainSummaryTry2Merge4xx(csvData.DfCsv, &mapMainSummary)
+				mainSummaryTry2Merge4Deth(csvData.DfCsv, &mapMainSummary)
 				mapTmp = nil
 			}
 		case "patients":

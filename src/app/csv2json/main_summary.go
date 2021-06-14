@@ -52,7 +52,7 @@ import (
 
 const keyPatientStatus = "患者_状態"
 const keyDischaFlg = "退院済フラグ"
-const keyNumberOfXX = "死亡者人数"
+const keyNumberOfDeath = "死亡者人数"
 
 func isMildStatus(patientStatus string) bool {
 	return (patientStatus == "軽症" || patientStatus == "中等症" || patientStatus == "無症状")
@@ -62,6 +62,7 @@ func isServStatus(patientStatus string) bool {
 	return (patientStatus == "重症")
 }
 
+// [検査陽性患者の属性csv]から[検査陽性者の状況]を生成する
 func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
 	var sumPosi = 0   // 陽性患者数
 	var sumHosp = 0   // 入院中
@@ -140,11 +141,14 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 	return &mapResult
 }
 
-func mainSummaryTry2Merge4xx(df *dataframe.DataFrame, mapMainSummary *map[string]interface{}) {
+// [検査陽性者の状況] の 死亡者数 を [陽性患者数csv] からカウントして取得する。
+// ([検査陽性患者の属性csv]だけで死亡者を表現すると、死亡者の特定に繋がってしまうため)
+// また、退院数から死亡者数を減算する。
+func mainSummaryTry2Merge4Deth(df *dataframe.DataFrame, mapMainSummary *map[string]interface{}) {
 	var numberOfDeth = 0 // 死亡者数
-	dfSelected := df.Select(keyNumberOfXX)
+	dfSelected := df.Select(keyNumberOfDeath)
 	for _, v := range dfSelected.Maps() {
-		numberOfDeth = numberOfDeth + v[keyNumberOfXX].(int)
+		numberOfDeth = numberOfDeth + v[keyNumberOfDeath].(int)
 	}
 
 	aryChildren1 := (*mapMainSummary)["children"].([]interface{})
