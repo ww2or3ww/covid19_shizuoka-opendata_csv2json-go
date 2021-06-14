@@ -61,9 +61,11 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 			mapTmp = patientsSummary(csvData.DfCsv, csvData.DtUpdated)
 		case "inspection_persons":
 			mapTmp = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
-
+		case "contacts":
+			mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated)
 		default:
 			mapTmp = mapNotSupported(key)
+			hasError = true
 		}
 
 		if mapTmp != nil {
@@ -76,8 +78,9 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 
 		logger.Infof("%s time = %d milliseconds", value, time.Since(timeStart).Milliseconds())
 	}
+	mapResult["value"] = 0
 	mapResult["hasError"] = hasError
-	mapResult["lastUpdate"] = dtLastUpdate
+	mapResult["lastUpdate"] = dtLastUpdate.Format("2006/01/02 15:04")
 
 	return &mapResult
 }
