@@ -2,6 +2,8 @@
 
 「静岡県ふじのくにオープンデータカタログ」で公開されているCSVデータを  
 「新型コロナウイルス感染症対策サイト」で利用しているdata.jsonへ変換するプロジェクトです。
+(* Amazon API Gatewayから呼び出される AWS Lambda にデプロイして実行される事を想定した実装となっています。)
+
 
 ## サポートデータ
 
@@ -45,10 +47,12 @@ go version go1.13.4 linux/amd64
 |  |  |--go.sum
 |  |  |--main.go
 |  |  |--csv2json
+|  |  |  |--contacts.go
 |  |  |  |--csv2json.go
-|  |  |  |--mainSummary.go
+|  |  |  |--inspection_persons.go
+|  |  |  |--main_summary.go
 |  |  |  |--patients.go
-|  |  |  |--patientsSummary.go
+|  |  |  |--patients_summary.go
 |  |  |--utils
 |  |  |  |--apiutil
 |  |  |  |  |--apiutil.go
