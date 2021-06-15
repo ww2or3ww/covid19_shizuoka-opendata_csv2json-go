@@ -9,16 +9,9 @@ import (
 )
 
 func GetBytesFromResponseBody(address string) ([]byte, error) {
-	// creeate get request
-	request, err := http.NewRequest("GET", address, nil)
-	if err != nil {
-		logger.Errors(err)
-		return nil, err
-	}
-
-	// do get response
-	client := new(http.Client)
-	response, err := client.Do(request)
+	// get request
+	logger.Infos(address)
+	response, err := http.Get(address)
 	if err != nil {
 		fmt.Printf("error %+v\n", err)
 		logger.Errors(err)
@@ -27,7 +20,7 @@ func GetBytesFromResponseBody(address string) ([]byte, error) {
 	defer response.Body.Close()
 
 	// check status code
-	logger.Debugs(response.Status)
+	logger.Infof("Status=%v", response.Status)
 	if response.StatusCode != http.StatusOK {
 		errMsg := fmt.Sprintf("response.Status : %v", response.Status)
 		logger.Errorf(errMsg)
