@@ -81,14 +81,7 @@ func Errors(data ...interface{}) {
 func makeStringFromInterfaces(dataList ...interface{}) string {
 	var slc []string
 	for _, data := range dataList {
-		switch data := data.(type) {
-		case string:
-			slc = append(slc, data)
-		case fmt.Stringer:
-			slc = append(slc, data.String())
-		default:
-			slc = append(slc, fmt.Sprintf("%v", data))
-		}
+		slc = append(slc, fmt.Sprintf("%v", data))
 	}
 	return strings.Join(slc, ",")
 }
