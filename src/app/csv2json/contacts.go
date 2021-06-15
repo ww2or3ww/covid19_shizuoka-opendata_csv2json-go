@@ -35,71 +35,46 @@ json
 */
 
 import (
-	"app/utils/logger"
 	"app/utils/maputil"
-	"encoding/json"
-	"fmt"
-	"github.com/go-gota/gota/dataframe"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 const keyContactsDateOfReceipt = "受付_年月日"
 const keyContactsNumOfConsulted = "相談件数"
 
 type (
-	Contacts struct {
+	ContactData struct {
 		Date     string `json:"日付"`
 		Subtotal int    `json:"小計"`
+	}
+	Contacts struct {
+		Date string        `json:"date"`
+		Data []ContactData `json:"data"`
 	}
 )
 
 func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
 	dfSelected := df.Select([]string{keyContactsDateOfReceipt, keyContactsNumOfConsulted})
 
-	// 日付ごとにカウントアップ
-	maps := make(map[string]int)
+	// 日ごとデータを作成して配列にセット
+	i := 0
+	var dataList = make([]ContactData, len(dfSelected.Maps()))
 	for _, v := range dfSelected.Maps() {
+		var data ContactData
 		dateOfReceipt := v[keyContactsDateOfReceipt]
 		numOfConsulted := v[keyContactsNumOfConsulted]
-		maps[dateOfReceipt.(string)] = numOfConsulted.(int)
-	}
 
-	// 2020-01-29 から 今日までの 日ごとの配列を作成
-	startDate, _ := time.Parse("2006-01-02", "2020-01-29")
-	today := time.Now()
-	diffDate := today.Sub(startDate)
-	days := int(diffDate.Hours()) / 24
-	var dataList = make([]Contacts, days+1, days+1)
-
-	// 2020-01-29 から 今日までの 日ごとデータを作成して配列にセット
-	i := 0
-	for d := startDate; d.Unix() < time.Now().Unix(); d = d.AddDate(0, 0, 1) {
-		keyDate := d.Format("2006-01-02")
-		var data Contacts
-		data.Date = keyDate + "T08:00:00.000Z"
-		data.Subtotal = maps[keyDate]
+		data.Date = dateOfReceipt.(string) + "T08:00:00.000Z"
+		data.Subtotal = numOfConsulted.(int)
 		dataList[i] = data
 		i++
 	}
 
-	// data
-	mapsData := make(map[string]interface{}, 0)
-	mapsData["data"] = dataList
+	var stResult Contacts
+	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
+	stResult.Data = dataList
 
-	// date
-	jsonStr := fmt.Sprintf(`
-	  {
-      "date": "%s"
-	  }
-	`, dtUpdated.Format("2006/01/02 15:04"))
-	var mapDate = make(map[string]interface{})
-	err := json.Unmarshal([]byte(jsonStr), &mapDate)
-	if err != nil {
-		logger.Errors(err)
-	}
-
-	// data と date を マージ
-	mapResult := maputil.MergeMaps(mapsData, mapDate)
-
-	return &mapResult
+	return maputil.StructToMap(stResult)
 }

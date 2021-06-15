@@ -36,64 +36,47 @@ json
 */
 
 import (
-	"app/utils/logger"
 	"app/utils/maputil"
-	"encoding/json"
 	"fmt"
-	"github.com/go-gota/gota/dataframe"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 const keyInspectPersonsDate = "実施_年月日"
 const keyInspectPersonsNumOfPeople = "検査実施_人数"
 
+type (
+	InspectionDataset struct {
+		Label string `json:"label"`
+		Data  []int  `json:"data"`
+	}
+	Inspectionpersons struct {
+		Date     string              `json:"date"`
+		Labels   []string            `json:"labels"`
+		Datasets []InspectionDataset `json:"datasets"`
+	}
+)
+
 func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
 	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
 
 	// 行ごとのデータを取得して配列へセット
-	dateList := make([]string, len(dfSelected.Maps()), len(dfSelected.Maps()))
-	numList := make([]int, len(dfSelected.Maps()), len(dfSelected.Maps()))
+	dateList := make([]string, len(dfSelected.Maps()))
+	numList := make([]int, len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		dateList[i] = fmt.Sprintf("%s%s", v[keyInspectPersonsDate], "T08:00:00.000Z")
 		numList[i] = v[keyInspectPersonsNumOfPeople].(int)
 	}
 
-	// labels
-	mapLabels := make(map[string]interface{}, 0)
-	mapLabels["labels"] = dateList
+	datasetList := make([]InspectionDataset, 1)
+	datasetList[0].Data = numList
+	datasetList[0].Label = "PCR検査実施人数"
 
-	// datasets
-	mapDatasets := make(map[string]interface{}, 0)
-	mapDatasetsList := make([]map[string]interface{}, 1, 1)
-	jsonStrTmp := `
-	  {
-      "label": "PCR検査実施人数"
-	  }
-	`
-	var mapTmp = make(map[string]interface{})
-	err := json.Unmarshal([]byte(jsonStrTmp), &mapTmp)
-	if err != nil {
-		logger.Errors(err)
-	}
-	mapData := make(map[string]interface{}, 0)
-	mapData["data"] = numList
-	mapDatasetsList[0] = maputil.MergeMaps(mapTmp, mapData)
-	mapDatasets["datasets"] = mapDatasetsList
+	var stResult Inspectionpersons
+	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
+	stResult.Labels = dateList
+	stResult.Datasets = datasetList
 
-	// date
-	jsonStrDate := fmt.Sprintf(`
-	  {
-      "date": "%s"
-	  }
-	`, dtUpdated.Format("2006/01/02 15:04"))
-	var mapDate = make(map[string]interface{})
-	err = json.Unmarshal([]byte(jsonStrDate), &mapDate)
-	if err != nil {
-		logger.Errors(err)
-	}
-
-	// labels, datasets, date を マージ
-	mapResult := maputil.MergeMaps(mapLabels, mapDatasets, mapDate)
-
-	return &mapResult
+	return maputil.StructToMap(stResult)
 }

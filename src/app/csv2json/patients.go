@@ -1,6 +1,8 @@
 package csv2json
 
 /*
+陽性患者の属性
+
 csv
 No,全国地方公共団体コード,都道府県名,市区町村名,公表_年月日,曜日,発症_年月日,患者_居住地,患者_年代,患者_性別,患者_職業,患者_状態,患者_症状,患者_渡航歴の有無フラグ,退院済フラグ,備考
 1,221309,静岡県,浜松市,2020-03-28,土,,浜北区,,男性,自営業,軽症,,0,1,
@@ -50,13 +52,12 @@ json
 */
 
 import (
-	"app/utils/logger"
 	"app/utils/maputil"
-	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/go-gota/gota/dataframe"
 	"github.com/guregu/null"
-	"time"
 )
 
 const keyPatientsDay = "公表_年月日"
@@ -67,7 +68,7 @@ const keyPatientsSex = "患者_性別"
 const keyPatientsDischarge = "退院済フラグ"
 
 type (
-	Patient struct {
+	PatientData struct {
 		Release   string      `json:"リリース日"`
 		Residence string      `json:"居住地"`
 		Age       string      `json:"年代"`
@@ -75,13 +76,17 @@ type (
 		Discharge null.String `json:"退院"`
 		Date      string      `json:"date"`
 	}
+	Patients struct {
+		Date string        `json:"date"`
+		Data []PatientData `json:"data"`
+	}
 )
 
 func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
 	dfSelected := df.Select([]string{keyPatientsDay, keyPatientsCity, keyPatientsResidence, keyPatientsAge, keyPatientsSex, keyPatientsDischarge})
 
 	// 行ごとにデータを作成して配列にセット
-	var dataList = make([]Patient, len(dfSelected.Maps()), len(dfSelected.Maps()))
+	var dataList = make([]PatientData, len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		residence := v[keyPatientsResidence]
 		if residence == "" {
@@ -100,8 +105,8 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 			discharge = null.NewString(`○`, true)
 		}
 
-		var patientData Patient
-		patientData.Release = fmt.Sprintf(`%s`, v[keyPatientsDay].(string)+"T08:00:00.000Z")
+		var patientData PatientData
+		patientData.Release = v[keyPatientsDay].(string) + "T08:00:00.000Z"
 		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyPatientsCity], residence)
 		patientData.Age = fmt.Sprintf(`%s`, age)
 		patientData.Sex = fmt.Sprintf(`%s`, sex)
@@ -110,24 +115,10 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 		dataList[i] = patientData
 	}
 
-	// data
-	mapsData := make(map[string]interface{}, 0)
-	mapsData["data"] = dataList
+	var stResult Patients
+	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
+	stResult.Data = dataList
 
-	// date
-	jsonStr := fmt.Sprintf(`
-	  {
-      "date": "%s"
-	  }
-	`, dtUpdated.Format("2006/01/02 15:04"))
-	var mapDate = make(map[string]interface{})
-	err := json.Unmarshal([]byte(jsonStr), &mapDate)
-	if err != nil {
-		logger.Errors(err)
-	}
+	return maputil.StructToMap(stResult)
 
-	// data と date を マージ
-	mapResult := maputil.MergeMaps(mapsData, mapDate)
-
-	return &mapResult
 }

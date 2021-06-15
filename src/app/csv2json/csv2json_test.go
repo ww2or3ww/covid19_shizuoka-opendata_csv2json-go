@@ -38,7 +38,7 @@ func TestProcess(t *testing.T) {
 				apiAddress:  "xxx",
 				queryStrPrm: "main_summary:5ab47071-3651-457c-ae2b-bfb8fdbe1af1",
 			},
-			hasError: false,
+			hasError: true,
 		},
 	}
 	for _, tt := range tests {

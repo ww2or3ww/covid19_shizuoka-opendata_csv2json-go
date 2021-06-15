@@ -4,7 +4,6 @@ import (
 	"app/utils/apiutil"
 	"app/utils/logger"
 	"app/utils/maputil"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -27,6 +26,7 @@ type (
 // key	: csv address
 var mapCSVDataBackup = make(map[string](*CsvData))
 
+// オープンデータのCSVをJSONに変換する処理
 func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 	mapResult := make(map[string]interface{})
 	logger.Infos(apiAddress, queryStrPrm)
@@ -55,7 +55,8 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 			hasError = true
 			message := "failed to get csv data..."
 			logger.Errors(key, message)
-			mapTmp = createInvalidMap(key, message)
+			mapTmp = &(map[string]interface{}{key: message})
+			logger.Infos(mapTmp)
 		} else {
 			switch key {
 			case "main_summary":
@@ -75,8 +76,10 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 			case "contacts":
 				mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated)
 			default:
-				mapTmp = createInvalidMap(key, "not supported...")
 				hasError = true
+				message := "not supported..."
+				logger.Errors(key, message)
+				mapTmp = &(map[string]interface{}{key: message})
 			}
 		}
 
@@ -95,20 +98,6 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 	mapResult["hasError"] = hasError
 	mapResult["lastUpdate"] = dtLastUpdate.Format("2006/01/02 15:04")
 
-	return &mapResult
-}
-
-func createInvalidMap(key string, message string) *map[string]interface{} {
-	jsonStr := fmt.Sprintf(`
-	  {
-	    "%s": "%s"
-	  }
-	`, key, message)
-	var mapResult = make(map[string]interface{})
-	err := json.Unmarshal([]byte(jsonStr), &mapResult)
-	if err != nil {
-		logger.Errors(err)
-	}
 	return &mapResult
 }
 
@@ -161,17 +150,15 @@ func getCsvAddressFromBody(mapBody *map[string]interface{}) (csvAddress string, 
 	csvAddress = ""
 	errOut = nil
 
-	valueResult, _ := (*mapBody)["result"]
-	mapResult := valueResult.(map[string]interface{})
-	valueResources := mapResult["resources"]
-	listResources := valueResources.([]interface{})
+	mapResult := ((*mapBody)["result"]).(map[string]interface{})
+	listResources := (mapResult["resources"]).([]interface{})
 	for _, resource := range listResources {
 		mapResource := resource.(map[string]interface{})
-		downloadUrl, _ := mapResource["download_url"]
+		downloadUrl := mapResource["download_url"]
 		ext := strings.ToLower(filepath.Ext(downloadUrl.(string)))
 		if ext == ".csv" {
 			csvAddress = downloadUrl.(string)
-			updated, _ := mapResource["updated"]
+			updated := mapResource["updated"]
 			updatedDateTime, _ = httpdate.Str2Time(updated.(string), nil)
 			break
 		}
