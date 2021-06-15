@@ -150,10 +150,8 @@ func getCsvAddressFromBody(mapBody *map[string]interface{}) (csvAddress string, 
 	csvAddress = ""
 	errOut = nil
 
-	valueResult := (*mapBody)["result"]
-	mapResult := valueResult.(map[string]interface{})
-	valueResources := mapResult["resources"]
-	listResources := valueResources.([]interface{})
+	mapResult := ((*mapBody)["result"]).(map[string]interface{})
+	listResources := (mapResult["resources"]).([]interface{})
 	for _, resource := range listResources {
 		mapResource := resource.(map[string]interface{})
 		downloadUrl := mapResource["download_url"]
