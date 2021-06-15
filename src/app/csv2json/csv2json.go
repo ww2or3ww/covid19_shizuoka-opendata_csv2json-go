@@ -150,17 +150,17 @@ func getCsvAddressFromBody(mapBody *map[string]interface{}) (csvAddress string, 
 	csvAddress = ""
 	errOut = nil
 
-	valueResult, _ := (*mapBody)["result"]
+	valueResult := (*mapBody)["result"]
 	mapResult := valueResult.(map[string]interface{})
 	valueResources := mapResult["resources"]
 	listResources := valueResources.([]interface{})
 	for _, resource := range listResources {
 		mapResource := resource.(map[string]interface{})
-		downloadUrl, _ := mapResource["download_url"]
+		downloadUrl := mapResource["download_url"]
 		ext := strings.ToLower(filepath.Ext(downloadUrl.(string)))
 		if ext == ".csv" {
 			csvAddress = downloadUrl.(string)
-			updated, _ := mapResource["updated"]
+			updated := mapResource["updated"]
 			updatedDateTime, _ = httpdate.Str2Time(updated.(string), nil)
 			break
 		}

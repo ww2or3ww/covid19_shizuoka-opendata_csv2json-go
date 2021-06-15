@@ -40,8 +40,9 @@ import (
 	"app/utils/maputil"
 	"encoding/json"
 	"fmt"
-	"github.com/go-gota/gota/dataframe"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 const keyInspectPersonsDate = "実施_年月日"
@@ -51,20 +52,20 @@ func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string
 	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
 
 	// 行ごとのデータを取得して配列へセット
-	dateList := make([]string, len(dfSelected.Maps()), len(dfSelected.Maps()))
-	numList := make([]int, len(dfSelected.Maps()), len(dfSelected.Maps()))
+	dateList := make([]string, len(dfSelected.Maps()))
+	numList := make([]int, len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		dateList[i] = fmt.Sprintf("%s%s", v[keyInspectPersonsDate], "T08:00:00.000Z")
 		numList[i] = v[keyInspectPersonsNumOfPeople].(int)
 	}
 
 	// labels
-	mapLabels := make(map[string]interface{}, 0)
+	mapLabels := make(map[string]interface{})
 	mapLabels["labels"] = dateList
 
 	// datasets
-	mapDatasets := make(map[string]interface{}, 0)
-	mapDatasetsList := make([]map[string]interface{}, 1, 1)
+	mapDatasets := make(map[string]interface{})
+	mapDatasetsList := make([]map[string]interface{}, 1)
 	jsonStrTmp := `
 	  {
       "label": "PCR検査実施人数"
@@ -75,7 +76,7 @@ func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string
 	if err != nil {
 		logger.Errors(err)
 	}
-	mapData := make(map[string]interface{}, 0)
+	mapData := make(map[string]interface{})
 	mapData["data"] = numList
 	mapDatasetsList[0] = maputil.MergeMaps(mapTmp, mapData)
 	mapDatasets["datasets"] = mapDatasetsList

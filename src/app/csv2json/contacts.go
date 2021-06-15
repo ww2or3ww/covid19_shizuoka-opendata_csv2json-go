@@ -39,8 +39,9 @@ import (
 	"app/utils/maputil"
 	"encoding/json"
 	"fmt"
-	"github.com/go-gota/gota/dataframe"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 const keyContactsDateOfReceipt = "受付_年月日"
@@ -68,8 +69,8 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	startDate, _ := time.Parse("2006-01-02", "2020-01-29")
 	today := time.Now()
 	diffDate := today.Sub(startDate)
-	days := int(diffDate.Hours()) / 24
-	var dataList = make([]Contacts, days+1, days+1)
+	days := int(diffDate.Hours())/24 + 1
+	var dataList = make([]Contacts, days)
 
 	// 2020-01-29 から 今日までの 日ごとデータを作成して配列にセット
 	i := 0
@@ -83,7 +84,7 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	}
 
 	// data
-	mapsData := make(map[string]interface{}, 0)
+	mapsData := make(map[string]interface{})
 	mapsData["data"] = dataList
 
 	// date

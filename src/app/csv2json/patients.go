@@ -54,9 +54,10 @@ import (
 	"app/utils/maputil"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/go-gota/gota/dataframe"
 	"github.com/guregu/null"
-	"time"
 )
 
 const keyPatientsDay = "公表_年月日"
@@ -81,7 +82,7 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	dfSelected := df.Select([]string{keyPatientsDay, keyPatientsCity, keyPatientsResidence, keyPatientsAge, keyPatientsSex, keyPatientsDischarge})
 
 	// 行ごとにデータを作成して配列にセット
-	var dataList = make([]Patient, len(dfSelected.Maps()), len(dfSelected.Maps()))
+	var dataList = make([]Patient, len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		residence := v[keyPatientsResidence]
 		if residence == "" {
@@ -101,7 +102,7 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 		}
 
 		var patientData Patient
-		patientData.Release = fmt.Sprintf(`%s`, v[keyPatientsDay].(string)+"T08:00:00.000Z")
+		patientData.Release = v[keyPatientsDay].(string) + "T08:00:00.000Z"
 		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyPatientsCity], residence)
 		patientData.Age = fmt.Sprintf(`%s`, age)
 		patientData.Sex = fmt.Sprintf(`%s`, sex)
@@ -111,7 +112,7 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	}
 
 	// data
-	mapsData := make(map[string]interface{}, 0)
+	mapsData := make(map[string]interface{})
 	mapsData["data"] = dataList
 
 	// date

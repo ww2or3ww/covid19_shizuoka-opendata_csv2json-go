@@ -37,8 +37,9 @@ import (
 	"app/utils/maputil"
 	"encoding/json"
 	"fmt"
-	"github.com/go-gota/gota/dataframe"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 const keyPatientsSummaryDateOfPublicate = "公表_年月日"
@@ -67,7 +68,7 @@ func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]i
 	today := time.Now()
 	diffDate := today.Sub(startDate)
 	days := int(diffDate.Hours()) / 24
-	var dataList = make([]PatientSummary, days+1, days+1)
+	var dataList = make([]PatientSummary, days+1)
 
 	// 2020-01-29 から 今日までの 日ごとデータを作成して配列にセット
 	i := 0
@@ -81,7 +82,7 @@ func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]i
 	}
 
 	// data
-	mapsData := make(map[string]interface{}, 0)
+	mapsData := make(map[string]interface{})
 	mapsData["data"] = dataList
 
 	// date
