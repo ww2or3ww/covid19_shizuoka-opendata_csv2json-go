@@ -6,13 +6,14 @@ import (
 	"app/utils/maputil"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/Songmu/go-httpdate"
 	"github.com/go-gota/gota/dataframe"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 type (
@@ -27,7 +28,7 @@ type (
 var mapCSVDataBackup = make(map[string](*CsvData))
 
 func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
-	var mapResult map[string]interface{}
+	mapResult := make(map[string]interface{})
 	logger.Infos(apiAddress, queryStrPrm)
 
 	dtLastUpdate := time.Date(2000, 1, 1, 1, 1, 0, 0, time.Local)
@@ -35,37 +36,48 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 	types := strings.Split(queryStrPrm, ",")
 	for index, value := range types {
 		timeStart := time.Now()
+
 		values := strings.Split(value, ":")
+		if len(values) != 2 {
+			hasError = true
+			message := "invalid query param..."
+			logger.Errors(value, message)
+			continue
+		}
+
+		var mapTmp *map[string]interface{}
 		key := values[0]
 		apiId := values[1]
 		logger.Infof("%d, key=%s, id=%s", index, key, apiId)
 		csvData, err := getCSVDataFrame(fmt.Sprintf("%s?id=%s", apiAddress, apiId))
-		if err != nil {
-			logger.Errors(err)
-			hasError = true
-		}
 
-		var mapTmp *map[string]interface{}
-		switch key {
-		case "main_summary":
-			if mapResult[key] == nil {
-				mapTmp = mainSummary(csvData.DfCsv, csvData.DtUpdated)
-			} else {
-				mapMainSummary := mapResult[key].(map[string]interface{})
-				mainSummaryTry2Merge4Deth(csvData.DfCsv, &mapMainSummary)
-				mapTmp = nil
-			}
-		case "patients":
-			mapTmp = patients(csvData.DfCsv, csvData.DtUpdated)
-		case "patients_summary":
-			mapTmp = patientsSummary(csvData.DfCsv, csvData.DtUpdated)
-		case "inspection_persons":
-			mapTmp = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
-		case "contacts":
-			mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated)
-		default:
-			mapTmp = mapNotSupported(key)
+		if err != nil {
 			hasError = true
+			message := "failed to get csv data..."
+			logger.Errors(key, message)
+			mapTmp = createInvalidMap(key, message)
+		} else {
+			switch key {
+			case "main_summary":
+				if mapResult[key] == nil {
+					mapTmp = mainSummary(csvData.DfCsv, csvData.DtUpdated)
+				} else {
+					mapMainSummary := mapResult[key].(map[string]interface{})
+					mainSummaryTry2Merge4Deth(csvData.DfCsv, &mapMainSummary)
+					mapTmp = nil
+				}
+			case "patients":
+				mapTmp = patients(csvData.DfCsv, csvData.DtUpdated)
+			case "patients_summary":
+				mapTmp = patientsSummary(csvData.DfCsv, csvData.DtUpdated)
+			case "inspection_persons":
+				mapTmp = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
+			case "contacts":
+				mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated)
+			default:
+				mapTmp = createInvalidMap(key, "not supported...")
+				hasError = true
+			}
 		}
 
 		if mapTmp != nil {
@@ -78,6 +90,7 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 
 		logger.Infof("%s time = %d milliseconds", value, time.Since(timeStart).Milliseconds())
 	}
+
 	mapResult["value"] = 0
 	mapResult["hasError"] = hasError
 	mapResult["lastUpdate"] = dtLastUpdate.Format("2006/01/02 15:04")
@@ -85,12 +98,12 @@ func Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
 	return &mapResult
 }
 
-func mapNotSupported(key string) *map[string]interface{} {
+func createInvalidMap(key string, message string) *map[string]interface{} {
 	jsonStr := fmt.Sprintf(`
 	  {
-	    "%s": "not supported..."
+	    "%s": "%s"
 	  }
-	`, key)
+	`, key, message)
 	var mapResult = make(map[string]interface{})
 	err := json.Unmarshal([]byte(jsonStr), &mapResult)
 	if err != nil {
