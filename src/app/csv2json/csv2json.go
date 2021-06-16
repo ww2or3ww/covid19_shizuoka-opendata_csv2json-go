@@ -81,7 +81,7 @@ func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) *map[string]
 			case "inspection_persons":
 				mapTmp = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
 			case "contacts":
-				mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated, c2j.csvAccessor.GetTimeNow())
+				mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated)
 			default:
 				hasError = true
 				message := "not supported..."

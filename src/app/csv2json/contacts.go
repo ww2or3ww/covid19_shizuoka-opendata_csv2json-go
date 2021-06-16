@@ -55,7 +55,7 @@ type (
 	}
 )
 
-func contacts(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) *map[string]interface{} {
+func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
 	dfSelected := df.Select([]string{keyContactsDateOfReceipt, keyContactsNumOfConsulted})
 
 	// 日ごとデータを作成して配列にセット
@@ -69,7 +69,7 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) *ma
 		data.Date = dateOfReceipt.(string) + "T08:00:00.000Z"
 		data.Subtotal = numOfConsulted.(int)
 
-    dataList[i] = data
+		dataList[i] = data
 		i++
 	}
 
