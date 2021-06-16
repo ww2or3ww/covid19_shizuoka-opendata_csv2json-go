@@ -55,7 +55,7 @@ type (
 	}
 )
 
-func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func contacts(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) *map[string]interface{} {
 	dfSelected := df.Select([]string{keyContactsDateOfReceipt, keyContactsNumOfConsulted})
 
 	// 日付ごとにカウントアップ
@@ -66,16 +66,15 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 		maps[dateOfReceipt.(string)] = numOfConsulted.(int)
 	}
 
-	// 2020-01-29 から 今日までの 日ごとの配列を作成
-	startDate, _ := time.Parse("2006-01-02", "2020-01-29")
-	today := time.Now()
-	diffDate := today.Sub(startDate)
+	// 2020-01-29 から 指定日までの 日ごとの配列を作成
+	dtStart, _ := time.Parse("2006-01-02", "2020-01-29")
+	diffDate := dtEnd.Sub(dtStart)
 	days := int(diffDate.Hours())/24 + 1
 	var dataList = make([]ContactData, days)
 
-	// 2020-01-29 から 今日までの 日ごとデータを作成して配列にセット
+	// 2020-01-29 から 指定日までの 日ごとデータを作成して配列にセット
 	i := 0
-	for d := startDate; d.Unix() < time.Now().Unix(); d = d.AddDate(0, 0, 1) {
+	for d := dtStart; d.Unix() < dtEnd.Unix(); d = d.AddDate(0, 0, 1) {
 		keyDate := d.Format("2006-01-02")
 		var data ContactData
 		data.Date = keyDate + "T08:00:00.000Z"
