@@ -68,6 +68,7 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 
 		data.Date = dateOfReceipt.(string) + "T08:00:00.000Z"
 		data.Subtotal = numOfConsulted.(int)
+
 		dataList[i] = data
 		i++
 	}
