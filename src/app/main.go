@@ -19,6 +19,8 @@ const defaultTypes = "main_summary:5ab47071-3651-457c-ae2b-bfb8fdbe1af1,main_sum
 // APIアドレス(ふじの国オープンデータカタログ)
 const opendataApiUrl = "https://opendata.pref.shizuoka.jp/api/package_show"
 
+var c2j csv2json.Csv2Json
+
 // AWS Lambda エンドポイント
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	timeStart := time.Now()
@@ -33,7 +35,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// csv2json
-	mapData := csv2json.Process(opendataApiUrl, queryStrPrm)
+	mapData := c2j.Process(opendataApiUrl, queryStrPrm)
 
 	// mapをインデント付きのJSONに整形してBodyとして返す
 	jsonIndent, err := json.MarshalIndent(mapData, "", "   ")
@@ -70,6 +72,9 @@ func init() {
 		logLv = logger.LogLv(n)
 	}
 	logger.LogInitialize(logLv, 25)
+
+	// 本番用のCSV2JSONをDIしておく
+	c2j = csv2json.NewCsv2Json(csv2json.NewCsvAccessor())
 }
 
 // アプリケーションエンドポイント
