@@ -67,9 +67,9 @@ func TestProcess(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		var c2j Csv2Json
+		var c2j *Csv2Json
 		if tt.useMock {
-			c2j = NewCsv2Json(NewCsvAccessorTest())
+			c2j = NewCsv2Json(newCsvAccessorTest())
 		} else {
 			c2j = NewCsv2Json(NewCsvAccessor())
 		}
@@ -93,7 +93,7 @@ func TestProcess(t *testing.T) {
 
 type csvAccessorTest struct{}
 
-func NewCsvAccessorTest() CsvAccessor {
+func newCsvAccessorTest() accessor {
 	return &csvAccessorTest{}
 }
 

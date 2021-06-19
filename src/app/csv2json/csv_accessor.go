@@ -14,19 +14,13 @@ import (
 	"golang.org/x/text/transform"
 )
 
-type CsvAccessor interface {
-	// APIコールによりCSVデータを取得する
-	GetCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error)
-	// 今日の日付を取得する
-	GetTimeNow() time.Time
-}
-
 type csvAccessor struct{}
 
-func NewCsvAccessor() CsvAccessor {
+func NewCsvAccessor() *csvAccessor {
 	return &csvAccessor{}
 }
 
+// APIコールによりCSVデータを取得する
 func (ca *csvAccessor) GetCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error) {
 
 	// get json from api
@@ -87,6 +81,7 @@ func getCsvAddressFromBody(mapBody *map[string]interface{}) (csvAddress string, 
 	return csvAddress, updatedDateTime, errOut
 }
 
+// 今日の日付を取得する
 func (ca *csvAccessor) GetTimeNow() time.Time {
 	return time.Now()
 }

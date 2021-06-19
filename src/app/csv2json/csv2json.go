@@ -28,16 +28,17 @@ type Result struct {
 	LastUpdate        string             `json:"lastUpdate"`
 }
 
-type Csv2Json interface {
-	Process(apiAddress string, queryStrPrm string) (*Result, error)
+type accessor interface {
+	GetCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error)
+	GetTimeNow() time.Time
 }
 
-type csv2Json struct {
-	csvAccessor CsvAccessor
+type Csv2Json struct {
+	csvAccessor accessor
 }
 
-func NewCsv2Json(csvAccessorIn CsvAccessor) Csv2Json {
-	return &csv2Json{csvAccessor: csvAccessorIn}
+func NewCsv2Json(csvAccessorIn accessor) *Csv2Json {
+	return &Csv2Json{csvAccessor: csvAccessorIn}
 }
 
 // 同じCSVデータを何度も読みにいかないためにバックアップしておくための変数
@@ -45,7 +46,7 @@ func NewCsv2Json(csvAccessorIn CsvAccessor) Csv2Json {
 var mapCSVDataBackup = make(map[string](*CsvData))
 
 // オープンデータのCSVをJSONに変換する処理
-func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, error) {
+func (c2j *Csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, error) {
 	r := &Result{
 		Value:    0,
 		HasError: false,
@@ -126,7 +127,7 @@ func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, er
 	return r, nil
 }
 
-func getCSVDataFrame(apiAddress string, csvAccessor CsvAccessor) (*CsvData, error) {
+func getCSVDataFrame(apiAddress string, csvAccessor accessor) (*CsvData, error) {
 	data := mapCSVDataBackup[apiAddress]
 	var err error
 	if data == nil {
