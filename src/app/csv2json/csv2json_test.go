@@ -74,13 +74,17 @@ func TestProcess(t *testing.T) {
 			c2j = NewCsv2Json(NewCsvAccessor())
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			mapResult := c2j.Process(tt.args.apiAddress, tt.args.queryStrPrm)
+			mapResult, err := c2j.Process(tt.args.apiAddress, tt.args.queryStrPrm)
+			if err != nil {
+				if !tt.hasError {
+					t.Errorf(tt.name)
+				}
+				return
+			}
 			jsonIndent, _ := json.MarshalIndent(mapResult, "", "   ")
 			logger.Debugs(string(jsonIndent))
 
 			if mapResult == nil {
-				t.Errorf(tt.name)
-			} else if (*mapResult)["hasError"] != tt.hasError {
 				t.Errorf(tt.name)
 			}
 		})

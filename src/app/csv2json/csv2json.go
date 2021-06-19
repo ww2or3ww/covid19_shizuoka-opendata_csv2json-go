@@ -3,6 +3,7 @@ package csv2json
 import (
 	"app/utils/logger"
 	"app/utils/maputil"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -18,7 +19,7 @@ type (
 )
 
 type Csv2Json interface {
-	Process(apiAddress string, queryStrPrm string) *map[string]interface{}
+	Process(apiAddress string, queryStrPrm string) (*map[string]interface{}, error)
 }
 
 type csv2Json struct {
@@ -34,22 +35,20 @@ func NewCsv2Json(csvAccessorIn CsvAccessor) Csv2Json {
 var mapCSVDataBackup = make(map[string](*CsvData))
 
 // オープンデータのCSVをJSONに変換する処理
-func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) *map[string]interface{} {
+func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) (*map[string]interface{}, error) {
 	mapResult := make(map[string]interface{})
 	logger.Infos(apiAddress, queryStrPrm)
 
 	dtLastUpdate := time.Date(2000, 1, 1, 1, 1, 0, 0, time.Local)
-	hasError := false
 	types := strings.Split(queryStrPrm, ",")
 	for index, value := range types {
 		timeStart := time.Now()
 
 		values := strings.Split(value, ":")
 		if len(values) != 2 {
-			hasError = true
 			message := "invalid query param..."
 			logger.Errors(value, message)
-			continue
+			return nil, errors.New("invalid query param")
 		}
 
 		var mapTmp *map[string]interface{}
@@ -59,35 +58,53 @@ func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) *map[string]
 		csvData, err := getCSVDataFrame(fmt.Sprintf("%s?id=%s", apiAddress, apiId), c2j.csvAccessor)
 
 		if err != nil {
-			hasError = true
 			message := "failed to get csv data..."
 			logger.Errors(key, message)
-			mapTmp = &(map[string]interface{}{key: message})
-			logger.Infos(mapTmp)
-		} else {
-			switch key {
-			case "main_summary":
-				if mapResult[key] == nil {
-					mapTmp = mainSummary(csvData.DfCsv, csvData.DtUpdated)
-				} else {
-					mapMainSummary := mapResult[key].(map[string]interface{})
-					mainSummaryTry2Merge4Deth(csvData.DfCsv, &mapMainSummary)
-					mapTmp = nil
+			return nil, errors.New("failed to get cav data")
+		}
+
+		switch key {
+		case "main_summary":
+			if mapResult[key] == nil {
+				mapTmp, err = mainSummary(csvData.DfCsv, csvData.DtUpdated)
+				if err != nil {
+					return nil, err
 				}
-			case "patients":
-				mapTmp = patients(csvData.DfCsv, csvData.DtUpdated)
-			case "patients_summary":
-				mapTmp = patientsSummary(csvData.DfCsv, csvData.DtUpdated, c2j.csvAccessor.GetTimeNow())
-			case "inspection_persons":
-				mapTmp = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
-			case "contacts":
-				mapTmp = contacts(csvData.DfCsv, csvData.DtUpdated)
-			default:
-				hasError = true
-				message := "not supported..."
-				logger.Errors(key, message)
-				mapTmp = &(map[string]interface{}{key: message})
+			} else {
+				mapMainSummary, ok := mapResult[key].(map[string]interface{})
+				if !ok {
+					return nil, err
+				}
+				err = mainSummaryTry2Merge4Deth(csvData.DfCsv, &mapMainSummary)
+				if err != nil {
+					return nil, err
+				}
+				mapTmp = nil
 			}
+		case "patients":
+			mapTmp, err = patients(csvData.DfCsv, csvData.DtUpdated)
+			if err != nil {
+				return nil, err
+			}
+		case "patients_summary":
+			mapTmp, err = patientsSummary(csvData.DfCsv, csvData.DtUpdated, c2j.csvAccessor.GetTimeNow())
+			if err != nil {
+				return nil, err
+			}
+		case "inspection_persons":
+			mapTmp, err = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
+			if err != nil {
+				return nil, err
+			}
+		case "contacts":
+			mapTmp, err = contacts(csvData.DfCsv, csvData.DtUpdated)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			message := "not supported..."
+			logger.Errors(key, message)
+			return nil, errors.New("not supported")
 		}
 
 		if mapTmp != nil {
@@ -102,10 +119,10 @@ func (c2j *csv2Json) Process(apiAddress string, queryStrPrm string) *map[string]
 	}
 
 	mapResult["value"] = 0
-	mapResult["hasError"] = hasError
+	mapResult["hasError"] = false
 	mapResult["lastUpdate"] = dtLastUpdate.Format("2006/01/02 15:04")
 
-	return &mapResult
+	return &mapResult, nil
 }
 
 func getCSVDataFrame(apiAddress string, csvAccessor CsvAccessor) (*CsvData, error) {

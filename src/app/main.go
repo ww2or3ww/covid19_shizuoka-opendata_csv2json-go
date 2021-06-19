@@ -35,7 +35,10 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// csv2json
-	mapData := c2j.Process(opendataApiUrl, queryStrPrm)
+	mapData, err := c2j.Process(opendataApiUrl, queryStrPrm)
+	if err != nil {
+		return createErrorResponse("convert csv into json failed", err)
+	}
 
 	// mapをインデント付きのJSONに整形してBodyとして返す
 	jsonIndent, err := json.MarshalIndent(mapData, "", "   ")
