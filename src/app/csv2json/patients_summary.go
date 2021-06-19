@@ -35,7 +35,6 @@ json
 */
 
 import (
-	"app/utils/maputil"
 	"errors"
 	"time"
 
@@ -55,7 +54,7 @@ type (
 	}
 )
 
-func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) (*map[string]interface{}, error) {
+func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) (*PatientsSummary, error) {
 	dfSelected := df.Select(keyPatientsSummaryDateOfPublicate)
 
 	// 日付ごとにカウントアップ
@@ -87,9 +86,10 @@ func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Ti
 		i++
 	}
 
-	var stResult PatientsSummary
-	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
-	stResult.Data = dataList
+	ps := &PatientsSummary{
+		Date: dtUpdated.Format("2006/01/02 15:04"),
+		Data: dataList,
+	}
 
-	return maputil.StructToMap(stResult), nil
+	return ps, nil
 }

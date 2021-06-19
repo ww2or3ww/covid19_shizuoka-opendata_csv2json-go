@@ -35,7 +35,6 @@ json
 */
 
 import (
-	"app/utils/maputil"
 	"errors"
 	"time"
 
@@ -56,14 +55,17 @@ type (
 	}
 )
 
-func contacts(df *dataframe.DataFrame, dtUpdated time.Time) (*map[string]interface{}, error) {
+func contacts(df *dataframe.DataFrame, dtUpdated time.Time) (*Contacts, error) {
 	dfSelected := df.Select([]string{keyContactsDateOfReceipt, keyContactsNumOfConsulted})
+
+	c := &Contacts{
+		Date: dtUpdated.Format("2006/01/02 15:04"),
+		Data: make([]ContactData, len(dfSelected.Maps())),
+	}
 
 	// 日ごとデータを作成して配列にセット
 	i := 0
-	var dataList = make([]ContactData, len(dfSelected.Maps()))
 	for _, v := range dfSelected.Maps() {
-		var data ContactData
 		dateOfReceipt, ok := v[keyContactsDateOfReceipt].(string)
 		if !ok {
 			return nil, errors.New("unable to cast contacts date of receipt to string")
@@ -73,16 +75,12 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) (*map[string]interfa
 			return nil, errors.New("unable to cast contacts num of consulted to int")
 		}
 
-		data.Date = dateOfReceipt + "T08:00:00.000Z"
-		data.Subtotal = numOfConsulted
-
-		dataList[i] = data
+		c.Data[i] = ContactData{
+			Date:     dateOfReceipt + "T08:00:00.000Z",
+			Subtotal: numOfConsulted,
+		}
 		i++
 	}
 
-	var stResult Contacts
-	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
-	stResult.Data = dataList
-
-	return maputil.StructToMap(stResult), nil
+	return c, nil
 }
