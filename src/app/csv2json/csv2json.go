@@ -45,7 +45,7 @@ func NewCsv2Json(csvAccessorIn accessor) *Csv2Json {
 // key	: csv address
 var mapCSVDataBackup = make(map[string](*CsvData))
 
-// オープンデータのCSVをJSONに変換する処理
+// Process はオープンデータのCSVをJSONに変換する
 func (c2j *Csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, error) {
 	r := &Result{
 		Value:    0,
