@@ -1,7 +1,6 @@
 package csv2json
 
 import (
-	"app/utils/logger"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/Songmu/go-httpdate"
 	"github.com/go-gota/gota/dataframe"
+
+	"app/utils/logger"
 )
 
 const defApiAddress = "https://opendata.pref.shizuoka.jp/api/package_show"

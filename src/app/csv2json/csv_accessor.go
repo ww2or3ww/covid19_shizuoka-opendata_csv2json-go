@@ -1,8 +1,6 @@
 package csv2json
 
 import (
-	"app/utils/apiutil"
-	"app/utils/logger"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -12,6 +10,9 @@ import (
 	"github.com/go-gota/gota/dataframe"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
+
+	"app/utils/apiutil"
+	"app/utils/logger"
 )
 
 type csvAccessor struct{}

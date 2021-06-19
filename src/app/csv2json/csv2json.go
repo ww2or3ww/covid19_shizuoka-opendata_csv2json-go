@@ -1,13 +1,14 @@
 package csv2json
 
 import (
-	"app/utils/logger"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/go-gota/gota/dataframe"
+
+	"app/utils/logger"
 )
 
 type (

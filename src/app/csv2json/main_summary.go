@@ -44,8 +44,9 @@ json
 
 import (
 	"errors"
-	"github.com/go-gota/gota/dataframe"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 const keyMainSummaryPatientStatus = "患者_状態"
