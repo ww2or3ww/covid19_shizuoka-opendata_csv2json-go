@@ -53,6 +53,7 @@ json
 
 import (
 	"app/utils/maputil"
+	"errors"
 	"fmt"
 	"time"
 
@@ -82,7 +83,7 @@ type (
 	}
 )
 
-func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func patients(df *dataframe.DataFrame, dtUpdated time.Time) (*map[string]interface{}, error) {
 	dfSelected := df.Select([]string{keyPatientsDay, keyPatientsCity, keyPatientsResidence, keyPatientsAge, keyPatientsSex, keyPatientsDischarge})
 
 	// 行ごとにデータを作成して配列にセット
@@ -105,8 +106,12 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 			discharge = null.NewString(`○`, true)
 		}
 
+		r, ok := v[keyPatientsDay].(string)
+		if !ok {
+			return nil, errors.New("unable to cast patients day to string")
+		}
 		var patientData PatientData
-		patientData.Release = v[keyPatientsDay].(string) + "T08:00:00.000Z"
+		patientData.Release = r + "T08:00:00.000Z"
 		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyPatientsCity], residence)
 		patientData.Age = fmt.Sprintf(`%s`, age)
 		patientData.Sex = fmt.Sprintf(`%s`, sex)
@@ -119,6 +124,6 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
 	stResult.Data = dataList
 
-	return maputil.StructToMap(stResult)
+	return maputil.StructToMap(stResult), nil
 
 }

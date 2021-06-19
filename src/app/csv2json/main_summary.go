@@ -45,6 +45,7 @@ json
 import (
 	"app/utils/logger"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-gota/gota/dataframe"
 	"time"
@@ -63,7 +64,7 @@ func isServStatus(patientStatus string) bool {
 }
 
 // [検査陽性患者の属性csv]から[検査陽性者の状況]を生成する
-func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) (*map[string]interface{}, error) {
 	var sumPosi = 0   // 陽性患者数
 	var sumHosp = 0   // 入院中
 	var sumMild = 0   // 軽症・中軽症 + 無症状
@@ -72,7 +73,10 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 
 	dfSelected := df.Select([]string{keyMainSummaryPatientStatus, keyMainSummaryDischaFlg})
 	for _, v := range dfSelected.Maps() {
-		patientStatus := v[keyMainSummaryPatientStatus]
+		patientStatus, ok := v[keyMainSummaryPatientStatus].(string)
+		if !ok {
+			return nil, errors.New("unable to cast main summary patient status to string")
+		}
 		dischanFlg := v[keyMainSummaryDischaFlg]
 
 		// 陽性患者数
@@ -83,10 +87,10 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 			sumHosp += 1
 		}
 
-		if isMildStatus(patientStatus.(string)) && dischanFlg == 0 {
+		if isMildStatus(patientStatus) && dischanFlg == 0 {
 			// 軽症・中等症者数
 			sumMild += 1
-		} else if isServStatus(patientStatus.(string)) && dischanFlg == 0 {
+		} else if isServStatus(patientStatus) && dischanFlg == 0 {
 			// 重傷者数
 			sumServ += 1
 		} else if dischanFlg == 1 {
@@ -136,29 +140,52 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]inter
 	err := json.Unmarshal([]byte(jsonStr), &mapResult)
 	if err != nil {
 		logger.Errors(err)
+		return nil, err
 	}
 
-	return &mapResult
+	return &mapResult, nil
 }
 
 // [検査陽性者の状況] の 死亡者数 を [陽性患者数csv] からカウントして取得する。
 // ([検査陽性患者の属性csv]だけで死亡者を表現すると、死亡者の特定に繋がってしまうため)
 // また、退院数から死亡者数を減算する。
-func mainSummaryTry2Merge4Deth(df *dataframe.DataFrame, mapMainSummary *map[string]interface{}) {
+func mainSummaryTry2Merge4Deth(df *dataframe.DataFrame, mapMainSummary *map[string]interface{}) error {
 	var numberOfDeth = 0 // 死亡者数
 	dfSelected := df.Select(keyMainSummaryNumberOfDeath)
 	for _, v := range dfSelected.Maps() {
-		numberOfDeth = numberOfDeth + v[keyMainSummaryNumberOfDeath].(int)
+		n, ok := v[keyMainSummaryNumberOfDeath].(int)
+		if !ok {
+			return errors.New("unable to cast main summery number of death")
+		}
+		numberOfDeth = numberOfDeth + n
 	}
 
-	aryChildren1 := (*mapMainSummary)["children"].([]interface{})
-	aryChildren2 := aryChildren1[0].(map[string]interface{})["children"].([]interface{})
+	aryChildren1, ok := (*mapMainSummary)["children"].([]interface{})
+	if !ok {
+		return errors.New("unable to cast main summary children to interface slice")
+	}
+	aryChildren2, ok := aryChildren1[0].(map[string]interface{})["children"].([]interface{})
+	if !ok {
+		return errors.New("unable to cast main summary positive children to interface slice")
+	}
 
 	// 死亡の値を設定
-	mapDeath := aryChildren2[2].(map[string]interface{})
+	mapDeath, ok := aryChildren2[2].(map[string]interface{})
+	if !ok {
+		return errors.New("unable to cast main summary death to map")
+	}
 	mapDeath["value"] = numberOfDeth
 
 	// 退院の値から死亡の値を減算
-	mapDischa := aryChildren2[1].(map[string]interface{})
-	mapDischa["value"] = mapDischa["value"].(float64) - float64(numberOfDeth)
+	mapDischa, ok := aryChildren2[1].(map[string]interface{})
+	if !ok {
+		return errors.New("unable to cast main summary discharged to map")
+	}
+	v, ok := mapDischa["value"].(float64)
+	if !ok {
+		return errors.New("unable to cast main summary discharged value to float64")
+	}
+	mapDischa["value"] = v - float64(numberOfDeth)
+
+	return nil
 }

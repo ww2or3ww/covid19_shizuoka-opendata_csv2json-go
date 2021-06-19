@@ -36,6 +36,7 @@ json
 
 import (
 	"app/utils/maputil"
+	"errors"
 	"time"
 
 	"github.com/go-gota/gota/dataframe"
@@ -54,16 +55,19 @@ type (
 	}
 )
 
-func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) *map[string]interface{} {
+func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) (*map[string]interface{}, error) {
 	dfSelected := df.Select(keyPatientsSummaryDateOfPublicate)
 
 	// 日付ごとにカウントアップ
 	maps := make(map[string]int)
 	for _, v := range dfSelected.Maps() {
-		dateOfPublicate := v[keyPatientsSummaryDateOfPublicate]
-		num := maps[dateOfPublicate.(string)]
+		dateOfPublicate, ok := v[keyPatientsSummaryDateOfPublicate].(string)
+		if !ok {
+			return nil, errors.New("unable to cast patients summary date of publicate to string")
+		}
+		num := maps[dateOfPublicate]
 		num++
-		maps[dateOfPublicate.(string)] = num
+		maps[dateOfPublicate] = num
 	}
 
 	// 2020-01-29 から 指定日までの 日ごとの配列を作成
@@ -87,5 +91,5 @@ func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Ti
 	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
 	stResult.Data = dataList
 
-	return maputil.StructToMap(stResult)
+	return maputil.StructToMap(stResult), nil
 }

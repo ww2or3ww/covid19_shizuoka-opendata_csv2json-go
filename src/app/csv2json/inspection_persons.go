@@ -37,6 +37,7 @@ json
 
 import (
 	"app/utils/maputil"
+	"errors"
 	"fmt"
 	"time"
 
@@ -58,7 +59,7 @@ type (
 	}
 )
 
-func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) (*map[string]interface{}, error) {
 	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
 
 	// 行ごとのデータを取得して配列へセット
@@ -66,7 +67,11 @@ func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string
 	numList := make([]int, len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		dateList[i] = fmt.Sprintf("%s%s", v[keyInspectPersonsDate], "T08:00:00.000Z")
-		numList[i] = v[keyInspectPersonsNumOfPeople].(int)
+		n, ok := v[keyInspectPersonsNumOfPeople].(int)
+		if !ok {
+			return nil, errors.New("unable to cast inspect persons num of people to int")
+		}
+		numList[i] = n
 	}
 
 	datasetList := make([]InspectionDataset, 1)
@@ -78,5 +83,5 @@ func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string
 	stResult.Labels = dateList
 	stResult.Datasets = datasetList
 
-	return maputil.StructToMap(stResult)
+	return maputil.StructToMap(stResult), nil
 }

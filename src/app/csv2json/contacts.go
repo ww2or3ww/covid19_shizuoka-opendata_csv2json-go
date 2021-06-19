@@ -36,6 +36,7 @@ json
 
 import (
 	"app/utils/maputil"
+	"errors"
 	"time"
 
 	"github.com/go-gota/gota/dataframe"
@@ -55,7 +56,7 @@ type (
 	}
 )
 
-func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func contacts(df *dataframe.DataFrame, dtUpdated time.Time) (*map[string]interface{}, error) {
 	dfSelected := df.Select([]string{keyContactsDateOfReceipt, keyContactsNumOfConsulted})
 
 	// 日ごとデータを作成して配列にセット
@@ -63,11 +64,17 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	var dataList = make([]ContactData, len(dfSelected.Maps()))
 	for _, v := range dfSelected.Maps() {
 		var data ContactData
-		dateOfReceipt := v[keyContactsDateOfReceipt]
-		numOfConsulted := v[keyContactsNumOfConsulted]
+		dateOfReceipt, ok := v[keyContactsDateOfReceipt].(string)
+		if !ok {
+			return nil, errors.New("unable to cast contacts date of receipt to string")
+		}
+		numOfConsulted, ok := v[keyContactsNumOfConsulted].(int)
+		if !ok {
+			return nil, errors.New("unable to cast contacts num of consulted to int")
+		}
 
-		data.Date = dateOfReceipt.(string) + "T08:00:00.000Z"
-		data.Subtotal = numOfConsulted.(int)
+		data.Date = dateOfReceipt + "T08:00:00.000Z"
+		data.Subtotal = numOfConsulted
 
 		dataList[i] = data
 		i++
@@ -77,5 +84,5 @@ func contacts(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
 	stResult.Data = dataList
 
-	return maputil.StructToMap(stResult)
+	return maputil.StructToMap(stResult), nil
 }
