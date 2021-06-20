@@ -1,11 +1,12 @@
 package apiutil
 
 import (
-	"app/utils/logger"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"app/utils/logger"
 )
 
 func GetBytesFromResponseBody(address string) ([]byte, error) {

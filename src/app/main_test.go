@@ -1,10 +1,11 @@
 package main
 
 import (
-	"app/utils/logger"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+
+	"app/utils/logger"
 )
 
 func TestHandlerSuccess(t *testing.T) {

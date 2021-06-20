@@ -1,7 +1,6 @@
 package csv2json
 
 import (
-	"app/utils/logger"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/Songmu/go-httpdate"
 	"github.com/go-gota/gota/dataframe"
+
+	"app/utils/logger"
 )
 
 const defApiAddress = "https://opendata.pref.shizuoka.jp/api/package_show"
@@ -67,20 +68,24 @@ func TestProcess(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		var c2j Csv2Json
+		var c2j *Csv2Json
 		if tt.useMock {
-			c2j = NewCsv2Json(NewCsvAccessorTest())
+			c2j = NewCsv2Json(newCsvAccessorTest())
 		} else {
 			c2j = NewCsv2Json(NewCsvAccessor())
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			mapResult := c2j.Process(tt.args.apiAddress, tt.args.queryStrPrm)
+			mapResult, err := c2j.Process(tt.args.apiAddress, tt.args.queryStrPrm)
+			if err != nil {
+				if !tt.hasError {
+					t.Errorf(tt.name)
+				}
+				return
+			}
 			jsonIndent, _ := json.MarshalIndent(mapResult, "", "   ")
 			logger.Debugs(string(jsonIndent))
 
 			if mapResult == nil {
-				t.Errorf(tt.name)
-			} else if (*mapResult)["hasError"] != tt.hasError {
 				t.Errorf(tt.name)
 			}
 		})
@@ -89,7 +94,7 @@ func TestProcess(t *testing.T) {
 
 type csvAccessorTest struct{}
 
-func NewCsvAccessorTest() CsvAccessor {
+func newCsvAccessorTest() accessor {
 	return &csvAccessorTest{}
 }
 

@@ -1,8 +1,6 @@
 package csv2json
 
 import (
-	"app/utils/apiutil"
-	"app/utils/logger"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -12,21 +10,18 @@ import (
 	"github.com/go-gota/gota/dataframe"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
-)
 
-type CsvAccessor interface {
-	// APIコールによりCSVデータを取得する
-	GetCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error)
-	// 今日の日付を取得する
-	GetTimeNow() time.Time
-}
+	"app/utils/apiutil"
+	"app/utils/logger"
+)
 
 type csvAccessor struct{}
 
-func NewCsvAccessor() CsvAccessor {
+func NewCsvAccessor() *csvAccessor {
 	return &csvAccessor{}
 }
 
+// GetCSVDataFrameFromApi はAPIコールによりCSVデータを取得する
 func (ca *csvAccessor) GetCSVDataFrameFromApi(apiAddress string) (*dataframe.DataFrame, time.Time, error) {
 
 	// get json from api
@@ -87,6 +82,7 @@ func getCsvAddressFromBody(mapBody *map[string]interface{}) (csvAddress string, 
 	return csvAddress, updatedDateTime, errOut
 }
 
+// GetTimeNow は今日の日付を取得する
 func (ca *csvAccessor) GetTimeNow() time.Time {
 	return time.Now()
 }
