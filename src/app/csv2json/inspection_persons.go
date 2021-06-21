@@ -61,7 +61,7 @@ type (
 func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) (*InspectionPersons, error) {
 	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
 	if df.Err != nil {
-		return &InspectionPersons{}, df.Err
+		return nil, df.Err
 	}
 
 	ip := &InspectionPersons{

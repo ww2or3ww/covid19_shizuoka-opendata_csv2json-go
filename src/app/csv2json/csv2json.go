@@ -61,9 +61,9 @@ func (c2j *Csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, er
 
 		values := strings.Split(value, ":")
 		if len(values) != 2 {
-			message := "invalid query param..."
-			logger.Errors(value, message)
-			return nil, errors.New("invalid query param")
+			r.HasError = true
+			logger.Errors(value, "invalid query param...")
+			continue
 		}
 
 		key := values[0]
@@ -72,48 +72,36 @@ func (c2j *Csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, er
 		csvData, err := getCSVDataFrame(fmt.Sprintf("%s?id=%s", apiAddress, apiId), c2j.csvAccessor)
 
 		if err != nil {
-			message := "failed to get csv data..."
-			logger.Errors(key, message)
-			return nil, errors.New("failed to get cav data")
+			r.HasError = true
+			logger.Errors(key, err)
+			continue
 		}
 
 		switch key {
 		case "main_summary":
 			if r.MainSummary == nil {
 				r.MainSummary, err = mainSummary(csvData.DfCsv, csvData.DtUpdated)
-				if err != nil {
-					return nil, err
-				}
 			} else {
 				err = mainSummaryTry2Merge4Deth(csvData.DfCsv, r.MainSummary)
-				if err != nil {
-					return nil, err
-				}
 			}
 		case "patients":
 			r.Patients, err = patients(csvData.DfCsv, csvData.DtUpdated)
-			if err != nil {
-				return nil, err
-			}
 		case "patients_summary":
 			r.PatientsSummary, err = patientsSummary(csvData.DfCsv, csvData.DtUpdated, c2j.csvAccessor.GetTimeNow())
-			if err != nil {
-				return nil, err
-			}
 		case "inspection_persons":
 			r.InspectionPersons, err = inspectionPersons(csvData.DfCsv, csvData.DtUpdated)
-			if err != nil {
-				return nil, err
-			}
 		case "contacts":
 			r.Contacts, err = contacts(csvData.DfCsv, csvData.DtUpdated)
-			if err != nil {
-				return nil, err
-			}
 		default:
 			message := "not supported..."
 			logger.Errors(key, message)
 			return nil, errors.New("not supported")
+		}
+
+		if err != nil {
+			r.HasError = true
+			logger.Errors(key, err)
+			continue
 		}
 
 		if csvData.DtUpdated.After(dtLastUpdate) {
