@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -8,9 +10,18 @@ import (
 	"app/utils/logger"
 )
 
-func TestHandlerSuccess(t *testing.T) {
-	logger.LogInitialize(logger.Debug, 25)
+func init() {
+	logLv := logger.Error
+	envLogLv := os.Getenv("LOG_LEVEL")
+	logger.Infos(envLogLv)
+	if envLogLv != "" {
+		n, _ := strconv.Atoi(envLogLv)
+		logLv = logger.LogLv(n)
+	}
+	logger.LogInitialize(logLv, 25)
+}
 
+func TestHandlerSuccess(t *testing.T) {
 	type args struct {
 		key   string
 		value string
