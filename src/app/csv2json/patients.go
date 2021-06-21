@@ -52,7 +52,7 @@ json
 */
 
 import (
-	"app/utils/maputil"
+	"errors"
 	"fmt"
 	"time"
 
@@ -82,11 +82,18 @@ type (
 	}
 )
 
-func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func patients(df *dataframe.DataFrame, dtUpdated time.Time) (*Patients, error) {
 	dfSelected := df.Select([]string{keyPatientsDay, keyPatientsCity, keyPatientsResidence, keyPatientsAge, keyPatientsSex, keyPatientsDischarge})
+	if df.Err != nil {
+		return nil, df.Err
+	}
+
+	p := &Patients{
+		Date: dtUpdated.Format("2006/01/02 15:04"),
+		Data: make([]PatientData, len(dfSelected.Maps())),
+	}
 
 	// 行ごとにデータを作成して配列にセット
-	var dataList = make([]PatientData, len(dfSelected.Maps()))
 	for i, v := range dfSelected.Maps() {
 		residence := v[keyPatientsResidence]
 		if residence == "" {
@@ -105,20 +112,19 @@ func patients(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interfac
 			discharge = null.NewString(`○`, true)
 		}
 
-		var patientData PatientData
-		patientData.Release = v[keyPatientsDay].(string) + "T08:00:00.000Z"
-		patientData.Residence = fmt.Sprintf(`%s %s`, v[keyPatientsCity], residence)
-		patientData.Age = fmt.Sprintf(`%s`, age)
-		patientData.Sex = fmt.Sprintf(`%s`, sex)
-		patientData.Discharge = discharge
-		patientData.Date = fmt.Sprintf(`%s`, v[keyPatientsDay])
-		dataList[i] = patientData
+		r, ok := v[keyPatientsDay].(string)
+		if !ok {
+			return nil, errors.New("unable to cast patients day to string")
+		}
+		p.Data[i] = PatientData{
+			Release:   r + "T08:00:00.000Z",
+			Residence: fmt.Sprintf(`%s %s`, v[keyPatientsCity], residence),
+			Age:       fmt.Sprintf(`%s`, age),
+			Sex:       fmt.Sprintf(`%s`, sex),
+			Discharge: discharge,
+			Date:      fmt.Sprintf(`%s`, v[keyPatientsDay]),
+		}
 	}
 
-	var stResult Patients
-	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
-	stResult.Data = dataList
-
-	return maputil.StructToMap(stResult)
-
+	return p, nil
 }

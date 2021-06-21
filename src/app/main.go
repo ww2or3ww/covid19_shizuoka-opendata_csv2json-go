@@ -2,15 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"app/csv2json"
 	"app/utils/logger"
-	"os"
-	"strconv"
-	"time"
 )
 
 // クエリパラメータが無かった場合のデフォルト(浜松市)
@@ -19,7 +19,11 @@ const defaultTypes = "main_summary:5ab47071-3651-457c-ae2b-bfb8fdbe1af1,main_sum
 // APIアドレス(ふじの国オープンデータカタログ)
 const opendataApiUrl = "https://opendata.pref.shizuoka.jp/api/package_show"
 
-var c2j csv2json.Csv2Json
+type Csv2Json interface {
+	Process(apiAddress string, queryStrPrm string) (*csv2json.Result, error)
+}
+
+var c2j Csv2Json
 
 // AWS Lambda エンドポイント
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -35,7 +39,10 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// csv2json
-	mapData := c2j.Process(opendataApiUrl, queryStrPrm)
+	mapData, err := c2j.Process(opendataApiUrl, queryStrPrm)
+	if err != nil {
+		return createErrorResponse("convert csv into json failed", err)
+	}
 
 	// mapをインデント付きのJSONに整形してBodyとして返す
 	jsonIndent, err := json.MarshalIndent(mapData, "", "   ")

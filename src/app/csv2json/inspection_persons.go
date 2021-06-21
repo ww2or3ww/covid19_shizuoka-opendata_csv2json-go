@@ -36,7 +36,7 @@ json
 */
 
 import (
-	"app/utils/maputil"
+	"errors"
 	"fmt"
 	"time"
 
@@ -51,32 +51,39 @@ type (
 		Label string `json:"label"`
 		Data  []int  `json:"data"`
 	}
-	Inspectionpersons struct {
+	InspectionPersons struct {
 		Date     string              `json:"date"`
 		Labels   []string            `json:"labels"`
 		Datasets []InspectionDataset `json:"datasets"`
 	}
 )
 
-func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) *map[string]interface{} {
+func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) (*InspectionPersons, error) {
 	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
-
-	// 行ごとのデータを取得して配列へセット
-	dateList := make([]string, len(dfSelected.Maps()))
-	numList := make([]int, len(dfSelected.Maps()))
-	for i, v := range dfSelected.Maps() {
-		dateList[i] = fmt.Sprintf("%s%s", v[keyInspectPersonsDate], "T08:00:00.000Z")
-		numList[i] = v[keyInspectPersonsNumOfPeople].(int)
+	if df.Err != nil {
+		return nil, df.Err
 	}
 
-	datasetList := make([]InspectionDataset, 1)
-	datasetList[0].Data = numList
-	datasetList[0].Label = "PCR検査実施人数"
+	ip := &InspectionPersons{
+		Date:   dtUpdated.Format("2006/01/02 15:04"),
+		Labels: make([]string, len(dfSelected.Maps())),
+		Datasets: []InspectionDataset{
+			{
+				Label: "PCR検査実施人数",
+				Data:  make([]int, len(dfSelected.Maps())),
+			},
+		},
+	}
 
-	var stResult Inspectionpersons
-	stResult.Date = dtUpdated.Format("2006/01/02 15:04")
-	stResult.Labels = dateList
-	stResult.Datasets = datasetList
+	// 行ごとのデータを取得して配列へセット
+	for i, v := range dfSelected.Maps() {
+		ip.Labels[i] = fmt.Sprintf("%s%s", v[keyInspectPersonsDate], "T08:00:00.000Z")
+		n, ok := v[keyInspectPersonsNumOfPeople].(int)
+		if !ok {
+			return nil, errors.New("unable to cast inspect persons num of people to int")
+		}
+		ip.Datasets[0].Data[i] = n
+	}
 
-	return maputil.StructToMap(stResult)
+	return ip, nil
 }
