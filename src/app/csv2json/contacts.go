@@ -57,6 +57,9 @@ type (
 
 func contacts(df *dataframe.DataFrame, dtUpdated time.Time) (*Contacts, error) {
 	dfSelected := df.Select([]string{keyContactsDateOfReceipt, keyContactsNumOfConsulted})
+	if df.Err != nil {
+		return nil, df.Err
+	}
 
 	c := &Contacts{
 		Date: dtUpdated.Format("2006/01/02 15:04"),

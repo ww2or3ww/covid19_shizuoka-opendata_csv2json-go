@@ -84,6 +84,9 @@ type (
 
 func patients(df *dataframe.DataFrame, dtUpdated time.Time) (*Patients, error) {
 	dfSelected := df.Select([]string{keyPatientsDay, keyPatientsCity, keyPatientsResidence, keyPatientsAge, keyPatientsSex, keyPatientsDischarge})
+	if df.Err != nil {
+		return nil, df.Err
+	}
 
 	p := &Patients{
 		Date: dtUpdated.Format("2006/01/02 15:04"),

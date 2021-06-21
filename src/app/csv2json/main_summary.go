@@ -81,6 +81,9 @@ func mainSummary(df *dataframe.DataFrame, dtUpdated time.Time) (*MainSummary, er
 	var sumDischa = 0 // 退院
 
 	dfSelected := df.Select([]string{keyMainSummaryPatientStatus, keyMainSummaryDischaFlg})
+	if df.Err != nil {
+		return nil, df.Err
+	}
 	for _, v := range dfSelected.Maps() {
 		patientStatus, ok := v[keyMainSummaryPatientStatus].(string)
 		if !ok {

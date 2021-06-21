@@ -60,6 +60,9 @@ type (
 
 func inspectionPersons(df *dataframe.DataFrame, dtUpdated time.Time) (*InspectionPersons, error) {
 	dfSelected := df.Select([]string{keyInspectPersonsDate, keyInspectPersonsNumOfPeople})
+	if df.Err != nil {
+		return &InspectionPersons{}, df.Err
+	}
 
 	ip := &InspectionPersons{
 		Date:   dtUpdated.Format("2006/01/02 15:04"),

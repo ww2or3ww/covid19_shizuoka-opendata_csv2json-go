@@ -56,6 +56,9 @@ type (
 
 func patientsSummary(df *dataframe.DataFrame, dtUpdated time.Time, dtEnd time.Time) (*PatientsSummary, error) {
 	dfSelected := df.Select(keyPatientsSummaryDateOfPublicate)
+	if df.Err != nil {
+		return nil, df.Err
+	}
 
 	// 日付ごとにカウントアップ
 	maps := make(map[string]int)
