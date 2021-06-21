@@ -19,11 +19,11 @@ type (
 )
 
 type Result struct {
-	Contacts          *Contacts          `json:"contacts"`
-	InspectionPersons *InspectionPersons `json:"inspection_persons"`
-	MainSummary       *MainSummary       `json:"main_summary"`
-	Patients          *Patients          `json:"patients"`
-	PatientsSummary   *PatientsSummary   `json:"patients_summary"`
+	Contacts          *Contacts          `json:"contacts,omitempty"`
+	InspectionPersons *InspectionPersons `json:"inspection_persons,omitempty"`
+	MainSummary       *MainSummary       `json:"main_summary,omitempty"`
+	Patients          *Patients          `json:"patients,omitempty"`
+	PatientsSummary   *PatientsSummary   `json:"patients_summary,omitempty"`
 	Value             int                `json:"value"`
 	HasError          bool               `json:"hasError"`
 	LastUpdate        string             `json:"lastUpdate"`
