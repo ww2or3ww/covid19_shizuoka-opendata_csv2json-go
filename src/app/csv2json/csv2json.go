@@ -1,7 +1,6 @@
 package csv2json
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -73,6 +72,7 @@ func (c2j *Csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, er
 
 		if err != nil {
 			r.HasError = true
+			setEmptyStructToResult(key, r)
 			logger.Errors(key, err)
 			continue
 		}
@@ -93,13 +93,14 @@ func (c2j *Csv2Json) Process(apiAddress string, queryStrPrm string) (*Result, er
 		case "contacts":
 			r.Contacts, err = contacts(csvData.DfCsv, csvData.DtUpdated)
 		default:
-			message := "not supported..."
-			logger.Errors(key, message)
-			return nil, errors.New("not supported")
+			r.HasError = true
+			logger.Errors(key, "key not supported...")
+			continue
 		}
 
 		if err != nil {
 			r.HasError = true
+			setEmptyStructToResult(key, r)
 			logger.Errors(key, err)
 			continue
 		}
@@ -125,4 +126,21 @@ func getCSVDataFrame(apiAddress string, csvAccessor accessor) (*CsvData, error) 
 		mapCSVDataBackup[apiAddress] = data
 	}
 	return data, err
+}
+
+func setEmptyStructToResult(key string, r *Result) {
+	switch key {
+	case "main_summary":
+		r.MainSummary = &MainSummary{}
+	case "patients":
+		r.Patients = &Patients{}
+	case "patients_summary":
+		r.PatientsSummary = &PatientsSummary{}
+	case "inspection_persons":
+		r.InspectionPersons = &InspectionPersons{}
+	case "contacts":
+		r.Contacts = &Contacts{}
+	default:
+		logger.Errors(key, "key not supported...")
+	}
 }
