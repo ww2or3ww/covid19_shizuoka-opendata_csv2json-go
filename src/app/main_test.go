@@ -6,14 +6,17 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/joho/godotenv"
 
 	"app/utils/logger"
 )
 
 func init() {
+	if os.Getenv("LOG_LEVEL") == "" {
+		godotenv.Load(".env")
+	}
 	logLv := logger.Error
 	envLogLv := os.Getenv("LOG_LEVEL")
-	logger.Infos(envLogLv)
 	if envLogLv != "" {
 		n, _ := strconv.Atoi(envLogLv)
 		logLv = logger.LogLv(n)

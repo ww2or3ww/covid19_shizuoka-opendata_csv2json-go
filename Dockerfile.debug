@@ -1,0 +1,17 @@
+FROM golang:1.16.5-alpine as builder
+
+WORKDIR /work/app
+COPY src/app .
+RUN apk update \
+ && apk add --no-cache git \
+ && go env -w GOPROXY=direct \
+ && go mod download \
+ && go build -o /main
+
+
+ENV LOG_LEVEL=2
+ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/local/bin/aws-lambda-rie
+RUN chmod 755 /usr/local/bin/aws-lambda-rie
+WORKDIR /
+
+ENTRYPOINT [ "/usr/local/bin/aws-lambda-rie" ]
