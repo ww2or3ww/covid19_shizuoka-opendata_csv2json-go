@@ -5,3 +5,4 @@ bin/
 *.mod
 .DS_Store
 .vscode/
+.env

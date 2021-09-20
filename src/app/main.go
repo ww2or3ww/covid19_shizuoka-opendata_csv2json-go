@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/joho/godotenv"
 
 	"app/csv2json"
 	"app/utils/logger"
@@ -86,6 +87,9 @@ func init() {
 
 // アプリケーションエンドポイント
 func main() {
+	if os.Getenv("LOG_LEVEL") == "" {
+		godotenv.Load(".env")
+	}
 	logger.Infos("=== START ===")
 	lambda.Start(handler)
 	logger.Infos("=== COMPLETED ===")
