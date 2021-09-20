@@ -1,15 +1,11 @@
 FROM golang:1.16.5-alpine as builder
 
+WORKDIR /work/app
+COPY src/app .
 RUN apk update \
  && apk add --no-cache git \
- && go env -w GOPROXY=direct
-
-WORKDIR /work/app
-
-COPY src/app .
-RUN rm -f go.mod go.sum \
- && go mod init app \
- && go mod tidy \
+ && go env -w GOPROXY=direct \
+ && go mod download \
  && go build -o /main
 
 
