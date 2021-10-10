@@ -71,7 +71,7 @@ $ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" 
 $ curl -XPOST  \
     "http://localhost:9000/2015-03-31/functions/function/invocations"  \
     -d '{ "queryStringParameters" : { "type" : "main_summary:5ab47071-3651-457c-ae2b-bfb8fdbe1af1" } }' \
-    -o ret.json
+    | jq -r .body
 ```
 
 ## ユニットテスト
